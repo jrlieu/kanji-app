@@ -224,7 +224,36 @@
         }
 
         search();
+
+        let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent Chrome from showing the tiny bar automatically
+  e.preventDefault();
+  // Save the event so we can trigger it later
+  deferredPrompt = e;
+  
+  // OPTIONAL: Show a custom "Install Now" banner or button here
+  console.log("Install prompt is ready to be triggered!");
+  
+  // You could trigger it immediately, but Chrome usually prefers 
+  // waiting for a user click to prevent "spamming" the user.
+  showMyCustomInstallButton(); 
+});
+
+function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt(); // Show the real Chrome install pop-up
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
     </script>
 </body>
 
 </html>
+
