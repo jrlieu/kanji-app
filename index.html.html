@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KanjiDict</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #1a1a1a; --card-bg: #222; --text: #ffffff;
+            --sub-text: #aaa; --accent: #81ecec; --border: #333;
+        }
+        [data-theme="light"] {
+            --bg: #f5f5f5; --card-bg: #ffffff; --text: #1a1a1a;
+            --sub-text: #666; --accent: #00b894; --border: #ddd;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            font-family: -apple-system, sans-serif;
+            background-color: var(--bg); color: var(--text);
+            overflow: hidden; touch-action: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* SEARCH VIEW */
+        #searchView { display: flex; flex-direction: column; height: 100%; }
+        #searchBar {
+            width: 100%; height: 70px; padding: 0 20px; font-size: 20px;
+            border: none; border-bottom: 1px solid var(--border);
+            background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #results { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .kanji-list-item { 
+            padding: 20px; border-bottom: 1px solid var(--border); background: var(--card-bg); 
+            transition: background-color 0.3s ease;
+        }
+
+        /* FLASHCARD VIEW */
+        #flashcardView {
+            display: none; height: 100vh; width: 100vw;
+            justify-content: center; align-items: flex-start;
+            background-color: var(--bg); padding-top: 15vh;
+            position: relative; overflow: hidden;
+        }
+
+        #fcContainer {
+            width: 100%;
+            text-align: center;
+            will-change: transform;
+            transition: transform 0.2s ease-out;
+        }
+
+        .fc-kanji { font-size: 140px; font-weight: bold; margin-bottom: 20px; }
+        .fc-bottom { 
+            width: 100%; display: flex; justify-content: space-between; 
+            padding: 0 30px; box-sizing: border-box; margin-top: 20px; 
+        }
+        .hiragana { color: var(--accent); font-size: 22px; font-weight: 500; }
+        .english { color: var(--sub-text); font-size: 20px; font-style: italic; }
+
+        /* FLOATING BUTTONS */
+        .fab-container {
+            position: fixed; bottom: 25px; right: 20px;
+            display: flex; flex-direction: column; gap: 15px; z-index: 1000;
+        }
+        .fab {
+            width: 55px; height: 55px; border-radius: 50%;
+            background: var(--accent); color: #1a1a1a;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: none; 
+            font-size: 20px; cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div id="searchView">
+        <input type="text" id="searchBar" placeholder="Search..." oninput="search()">
+        <div id="results"></div>
+    </div>
+
+    <div id="flashcardView">
+        <div id="fcContainer">
+            <div class="fc-kanji" id="fcKanji">?</div>
+            <div class="fc-bottom">
+                <span class="hiragana" id="fcHiragana"></span>
+                <span class="english" id="fcEnglish"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="fab-container">
+        <button class="fab" onclick="toggleView()" id="viewBtn"><i class="fas fa-layer-group"></i></button>
+        <button class="fab" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-sun"></i></button>
+    </div>
+
+    <script>
+        const kanjiData = [
+            { k: "日", h: "ひ / にち", e: "Sun / Day" },
+            { k: "本", h: "もと / ほん", e: "Book / Origin" },
+            { k: "学", h: "まなぶ / がく", e: "Study / Learn" },
+            { k: "猫", h: "ねこ", e: "Cat" },
+            { k: "水", h: "みず / すい", e: "Water" }
+        ];
+
+        let deck = [], history = [], currentCard = null, isFlashcardMode = false;
+
+        function search() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            const filtered = query ? kanjiData.filter(item => 
+                item.k.includes(query) || item.e.toLowerCase().includes(query) || item.h.includes(query)
+            ) : kanjiData;
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'kanji-list-item';
+                card.innerHTML = `<div style="font-size:32px; font-weight:bold;">${item.k}</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                        <span style="color:var(--accent)">${item.h}</span>
+                        <span style="color:var(--sub-text)">${item.e}</span>
+                    </div>`;
+                resultsDiv.appendChild(card);
+            });
+        }
+
+        function toggleView() {
+            isFlashcardMode = !isFlashcardMode;
+            document.getElementById('searchView').style.display = isFlashcardMode ? 'none' : 'flex';
+            document.getElementById('flashcardView').style.display = isFlashcardMode ? 'flex' : 'none';
+            document.querySelector('#viewBtn i').className = isFlashcardMode ? 'fas fa-magnifying-glass' : 'fas fa-layer-group';
+            if (isFlashcardMode) { resetDeck(); showNext(); }
+        }
+
+        function resetDeck() {
+            deck = [...kanjiData].sort(() => Math.random() - 0.5);
+            history = []; currentCard = null;
+        }
+
+        function displayCard(card) {
+            currentCard = card;
+            document.getElementById('fcKanji').innerText = card.k;
+            document.getElementById('fcHiragana').innerText = card.h;
+            document.getElementById('fcEnglish').innerText = card.e;
+        }
+
+        function showNext() {
+            if (deck.length === 0) resetDeck();
+            if (currentCard) history.push(currentCard);
+            displayCard(deck.pop());
+        }
+
+        function showPrev() {
+            if (history.length > 0) {
+                deck.push(currentCard);
+                displayCard(history.pop());
+            }
+        }
+
+        // --- SWIPE LOGIC ---
+        let startX = 0;
+        let currentX = 0;
+        const fcView = document.getElementById('flashcardView');
+        const container = document.getElementById('fcContainer');
+
+        fcView.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            container.style.transition = 'none'; 
+        });
+
+        fcView.addEventListener('touchmove', (e) => {
+            currentX = e.touches[0].clientX - startX;
+            container.style.transform = `translateX(${currentX}px)`;
+        });
+
+        fcView.addEventListener('touchend', () => {
+            container.style.transition = 'transform 0.2s ease-out';
+            if (currentX < -80) { 
+                container.style.transform = 'translateX(-100%)';
+                setTimeout(() => {
+                    showNext();
+                    container.style.transition = 'none';
+                    container.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        container.style.transition = 'transform 0.2s ease-out';
+                        container.style.transform = 'translateX(0)';
+                    }, 20);
+                }, 200);
+            } else if (currentX > 80) { 
+                container.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    showPrev();
+                    container.style.transition = 'none';
+                    container.style.transform = 'translateX(-100%)';
+                    setTimeout(() => {
+                        container.style.transition = 'transform 0.2s ease-out';
+                        container.style.transform = 'translateX(0)';
+                    }, 20);
+                }, 200);
+            } else {
+                container.style.transform = 'translateX(0)';
+            }
+            currentX = 0;
+        });
+
+        // --- FIXED THEME TOGGLE ---
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtnIcon = document.querySelector('#themeBtn i');
+            const currentTheme = body.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                themeBtnIcon.className = 'fas fa-circle-half-stroke'; // Show moon icon to switch back to dark
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeBtnIcon.className = 'fas fa-sun'; // Show sun icon to switch back to light
+            }
+        }
+
+        search();
+    </script>
+</body>
+</html>
