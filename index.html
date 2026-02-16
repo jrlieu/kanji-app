@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KanjiDict</title>
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
@@ -54,7 +54,17 @@
             transition: transform 0.2s ease-out;
         }
 
-        .fc-kanji { font-size: 140px; font-weight: bold; margin-bottom: 20px; }
+        /* RESPONSIVE KANJI SIZE */
+        .fc-kanji { 
+            font-weight: bold; 
+            margin-bottom: 20px;
+            white-space: nowrap; 
+            display: block;
+            width: 100%;
+            /* Clamp ensures it doesn't get TOO big on desktop or TOO small on mobile */
+            font-size: clamp(60px, 20vw, 140px);
+        }
+
         .fc-bottom { 
             width: 100%; display: flex; justify-content: space-between; 
             padding: 0 30px; box-sizing: border-box; margin-top: 20px; 
@@ -107,7 +117,6 @@
             { k: "寝室", h: "しんしつ", e: "Bedroom" },
             { k: "昼寝", h: "ひるね", e: "Nap" },
             { k: "眠る", h: "ねむる", e: "To fall asleep" },
-            
         ];
 
         let deck = [], history = [], currentCard = null, isFlashcardMode = false;
@@ -147,7 +156,19 @@
 
         function displayCard(card) {
             currentCard = card;
-            document.getElementById('fcKanji').innerText = card.k;
+            const kanjiEl = document.getElementById('fcKanji');
+            
+            // DYNAMIC FONT SCALING based on string length
+            const len = card.k.length;
+            if (len > 5) {
+                kanjiEl.style.fontSize = 'clamp(40px, 12vw, 70px)';
+            } else if (len > 3) {
+                kanjiEl.style.fontSize = 'clamp(50px, 15vw, 100px)';
+            } else {
+                kanjiEl.style.fontSize = 'clamp(60px, 20vw, 140px)';
+            }
+
+            kanjiEl.innerText = card.k;
             document.getElementById('fcHiragana').innerText = card.h;
             document.getElementById('fcEnglish').innerText = card.e;
         }
@@ -211,7 +232,6 @@
             currentX = 0;
         });
 
-        // --- FIXED THEME TOGGLE ---
         function toggleTheme() {
             const body = document.body;
             const themeBtnIcon = document.querySelector('#themeBtn i');
@@ -219,68 +239,37 @@
             
             if (currentTheme === 'dark') {
                 body.setAttribute('data-theme', 'light');
-                themeBtnIcon.className = 'fas fa-circle-half-stroke'; // Show moon icon to switch back to dark
+                themeBtnIcon.className = 'fas fa-circle-half-stroke';
             } else {
                 body.setAttribute('data-theme', 'dark');
-                themeBtnIcon.className = 'fas fa-sun'; // Show sun icon to switch back to light
+                themeBtnIcon.className = 'fas fa-sun';
             }
         }
 
         search();
 
-        let deferredPrompt;
+        // SERVICE WORKER REGISTRATION WITH AUTO-UPDATE
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Adding a timestamp to SW URL to bypass initial browser cache
+                navigator.serviceWorker.register('./sw.js?t=' + Date.now()).then(function(reg) {
+                    console.log('SW registered');
+                    
+                    // Check for updates
+                    reg.update();
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent Chrome from showing the tiny bar automatically
-  e.preventDefault();
-  // Save the event so we can trigger it later
-  deferredPrompt = e;
-  
-  // OPTIONAL: Show a custom "Install Now" banner or button here
-  console.log("Install prompt is ready to be triggered!");
-  
-  // You could trigger it immediately, but Chrome usually prefers 
-  // waiting for a user click to prevent "spamming" the user.
-  showMyCustomInstallButton(); 
-});
-
-function triggerInstall() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt(); // Show the real Chrome install pop-up
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install');
-      }
-      deferredPrompt = null;
-    });
-  }
-}
-    </script>
-
-    <script>
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                console.log('ServiceWorker registered successfully');
-            }).catch(function(err) {
-                console.log('ServiceWorker registration failed: ', err);
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Forces the page to reload when a new service worker is found
+                                window.location.reload();
+                            }
+                        };
+                    };
+                });
             });
-        });
-    }
-
-    // Add this for iOS standalone mode detection
-    if (window.navigator.standalone) {
-        document.body.classList.add('ios-standalone');
-    }
-</script>
+        }
+    </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
