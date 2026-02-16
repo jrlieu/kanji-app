@@ -24,7 +24,19 @@
             overflow: hidden; touch-action: none;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
+.fab-container {
+    position: fixed; bottom: 25px; right: 20px;
+    display: flex; flex-direction: column; gap: 15px; z-index: 1000;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateY(0);
+    opacity: 1;
+}
 
+.fab-container.hidden {
+    transform: translateY(100px);
+    opacity: 0;
+    pointer-events: none;
+}
         /* SEARCH VIEW */
         #searchView { display: flex; flex-direction: column; height: 100%; }
         #searchBar {
@@ -603,7 +615,43 @@
                 });
             });
         }
+        // Scroll hide/show for FABs
+let scrollTimeout;
+let lastScrollTop = 0;
+const fabContainer = document.querySelector('.fab-container');
+const resultsDiv = document.getElementById('results');
+
+resultsDiv.addEventListener('scroll', () => {
+    const scrollTop = resultsDiv.scrollTop;
+    
+    // Clear previous timeout
+    clearTimeout(scrollTimeout);
+    
+    // Hide FABs when scrolling down
+    if (scrollTop > lastScrollTop && scrollTop > 50) {
+        fabContainer.classList.add('hidden');
+    } 
+    // Show FABs when scrolling up
+    else if (scrollTop < lastScrollTop) {
+        fabContainer.classList.remove('hidden');
+    }
+    
+    lastScrollTop = scrollTop;
+    
+    // Auto-show after scrolling stops
+    scrollTimeout = setTimeout(() => {
+        fabContainer.classList.remove('hidden');
+    }, 1500);
+});
+
+// Show FABs when touch ends
+resultsDiv.addEventListener('touchend', () => {
+    scrollTimeout = setTimeout(() => {
+        fabContainer.classList.remove('hidden');
+    }, 300);
+});
     </script>
 </body>
 </html>
+
 
