@@ -248,25 +248,32 @@
 
         search();
 
-        // SERVICE WORKER REGISTRATION WITH AUTO-UPDATE
+        // FIXED SERVICE WORKER REGISTRATION - No more auto-refresh
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                // Adding a timestamp to SW URL to bypass initial browser cache
-                navigator.serviceWorker.register('./sw.js?t=' + Date.now()).then(function(reg) {
-                    console.log('SW registered');
+                // Removed the timestamp parameter that was causing unnecessary updates
+                navigator.serviceWorker.register('./sw.js').then(function(reg) {
+                    console.log('SW registered successfully');
                     
-                    // Check for updates
+                    // Silently check for updates (no page reload)
                     reg.update();
-
+                    
+                    // Optional: Just log when a new version is available without reloading
                     reg.onupdatefound = () => {
                         const installingWorker = reg.installing;
                         installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Forces the page to reload when a new service worker is found
-                                window.location.reload();
+                            if (installingWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    console.log('New version available - will be used next load');
+                                    // You could show a subtle notification here if you want
+                                } else {
+                                    console.log('Content cached for offline use');
+                                }
                             }
                         };
                     };
+                }).catch(function(error) {
+                    console.log('SW registration failed:', error);
                 });
             });
         }
