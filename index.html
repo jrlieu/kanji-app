@@ -3,110 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KanjiDict</title>
+    <title>KanjiDict — home + top nav</title>
     <link rel="manifest" href="manifest.json?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
+        * { box-sizing: border-box; }
         :root {
             --bg: #000; --card-bg: #000; --text: #ffffff;
-            --sub-text: #aaa; --accent: #81ecec; --border: #333;
+            --sub-text: #aaa; --accent: ; --border: rgba(0,0,0,0);
+            --quiz-option-bg: #1a1a1a; --table-header: #222;
+            --correct-bg: rgba(0, 184, 148, 0.15);
+            --wrong-bg: rgba(214, 48, 49, 0.15);
+            --nav-bg: #00b894;
         }
         [data-theme="light"] {
             --bg: #fff; --card-bg: #ffffff; --text: #000;
-            --sub-text: #666; --accent: #00b894; --border: #ddd;
+            --sub-text: #555; --accent: ; --border: rgba(0,0,0,0);
+            --quiz-option-bg: #f0f0f0; --table-header: #eaeaea;
+            --correct-bg: rgba(0, 184, 148, 0.1);
+            --wrong-bg: rgba(214, 48, 49, 0.1);
+            --nav-bg: lightgray;
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            font-family: -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg); color: var(--text);
             overflow: hidden; touch-action: none;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-.fab-container {
-    position: fixed; bottom: 25px; right: 20px;
-    display: flex; flex-direction: column; gap: 15px; z-index: 1000;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    transform: translateY(0);
-    opacity: 1;
-}
 
-.fab-container.hidden {
-    transform: translateY(100px);
-    opacity: 0;
-    pointer-events: none;
-}
-        /* SEARCH VIEW */
-        #searchView { display: flex; flex-direction: column; height: 100%; }
-        #searchBar {
-            width: 100%; height: 70px; padding: 0 20px; font-size: 20px;
-            border: none; border-bottom: 1px solid var(--border);
-            background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box;
-            transition: background-color 0.3s ease, color 0.3s ease;
+        /* ----- TOP NAVIGATION (home + search + 3 icons) ----- */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        #results { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .home-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: 0.1s;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .home-btn:active { transform: scale(0.92); }
+        
+        .search-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+        #searchBar {
+            width: 100%;
+            height: 44px;
+            padding: 0 18px;
+            font-size: 18px;
+            border: 2px solid var(--border);
+            border-radius: 40px;
+            background: var(--card-bg);
+            color: var(--text);
+            outline: none;
+            transition: 0.2s;
+        }
+        #searchBar:focus { border-color: var(--accent); }
+        
+        .nav-icons {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: 0.1s;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .nav-btn:active { transform: scale(0.92); }
+
+        /* views container */
+        .view {
+            display: none;
+            flex-direction: column;
+            height: calc(100% - 65px); /* top-nav height ~65px */
+            width: 100%;
+            position: absolute;
+            top: 65px;
+            left: 0;
+        }
+        .active-view { display: flex; }
+
+        /* SEARCH VIEW results */
+        #results { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px 10px 20px; 
+        }
         .kanji-list-item { 
-            padding: 20px;  background: var(--card-bg); 
-            transition: background-color 0.3s ease;
+            padding: 20px; 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            margin-bottom: 8px; 
+            border: 1px solid var(--border);
         }
 
         /* FLASHCARD VIEW */
         #flashcardView {
-            display: none; height: 100vh; width: 100vw;
-            justify-content: center; align-items: flex-start;
-            background-color: var(--bg); padding-top: 15vh;
-            position: relative; overflow: hidden;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: var(--bg);
+            padding-top: 8vh;
+            overflow: hidden;
         }
-
         #fcContainer {
             width: 100%;
             text-align: center;
             will-change: transform;
             transition: transform 0.2s ease-out;
         }
-
-        /* RESPONSIVE KANJI SIZE */
         .fc-kanji { 
             font-weight: bold; 
-            margin-bottom: 20px;
+            margin-bottom: 20px; 
             white-space: nowrap; 
-            display: block;
+            display: block; 
             width: 100%;
-            /* Clamp ensures it doesn't get TOO big on desktop or TOO small on mobile */
             font-size: clamp(60px, 20vw, 140px);
         }
-
         .fc-bottom { 
-            width: 100%; display: flex; justify-content: space-between; 
-            padding: 0 30px; box-sizing: border-box; margin-top: 20px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0 30px; 
+            box-sizing: border-box; 
+            margin-top: 20px; 
         }
         .hiragana { color: var(--accent); font-size: 22px; font-weight: 500; }
         .english { color: var(--sub-text); font-size: 20px; font-style: italic; }
 
-        /* FLOATING BUTTONS */
-        .fab-container {
-            position: fixed; bottom: 25px; right: 20px;
-            display: flex; flex-direction: column; gap: 15px; z-index: 1000;
+        /* QUIZ VIEW */
+        #quizView {
+            background: var(--bg);
+            overflow-y: auto;
+            padding: 16px 16px 30px;
         }
-        .fab {
-            width: 55px; height: 55px; border-radius: 50%;
-            background: var(--accent); color: #000;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: none; 
-            font-size: 20px; cursor: pointer;
-            transition: background-color 0.3s ease;
+        .quiz-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 20px; 
+            font-size: 18px;
+            background: var(--card-bg); 
+            padding: 14px 20px; 
+            border-radius: 40px;
+            border: 1px solid gray;
         }
+        .quiz-progress { color: var(--accent); font-weight: 700; }
+        .quiz-card {
+            background: var(--card-bg); 
+            border-radius: 36px; 
+            padding: 30px 16px;
+            border: 1px solid gray;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+        .quiz-question-kanji {
+            font-size: clamp(70px, 22vw, 150px); 
+            font-weight: 800;
+            text-align: center; 
+            margin: 10px 0 30px; 
+            line-height: 1.2;
+            letter-spacing: 4px; 
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .quiz-options {
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+            padding: 0 8px;
+        }
+        .quiz-option {
+            background: var(--quiz-option-bg); 
+            border: 2px solid var(--border);
+            border-radius: 60px; 
+            padding: 18px 16px; 
+            font-size: 22px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px;
+            transition: 0.15s; 
+            cursor: pointer; 
+            flex-wrap: wrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .quiz-option.selected {
+            border-color: var(--accent); 
+            background: rgba(129, 236, 236, 0.2);
+            transform: scale(1.01);
+        }
+        .quiz-option.correct-disabled {
+            border-color: #00b894; 
+            background: var(--correct-bg); 
+            pointer-events: none;
+            opacity: 0.9;
+        }
+        .quiz-option.wrong-disabled {
+            border-color: #d63031; 
+            background: var(--wrong-bg); 
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .option-hiragana {
+            font-weight: 800; 
+            font-size: 26px; 
+            color: var(--accent);
+        }
+        .option-english {
+            font-size: 18px; 
+            color: var(--sub-text); 
+            font-style: italic; 
+            background: rgba(128,128,128,0.1); 
+            padding: 4px 12px; 
+            border-radius: 40px;
+        }
+        .quiz-footer {
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 30px;
+            gap: 12px; 
+            padding: 0 8px;
+        }
+        .quiz-btn {
+            background: var(--accent); 
+            color: black; 
+            border: none;
+            padding: 16px 24px; 
+            border-radius: 50px; 
+            font-size: 18px; 
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            cursor: pointer; 
+            flex: 1;
+            transition: opacity 0.2s; 
+            text-align: center;
+        }
+        .quiz-btn:disabled { opacity: 0.25; pointer-events: none; }
+
+        /* result table */
+        #quizResultArea { padding: 8px 4px 20px; }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            background: var(--card-bg);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            font-size: 16px;
+        }
+        .result-table th {
+            background: var(--table-header);
+            padding: 18px 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text);
+            border-bottom: 2px solid var(--accent);
+        }
+        .result-table td {
+            padding: 16px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .result-table .correct-row { background: var(--correct-bg); }
+        .result-table .wrong-row { background: var(--wrong-bg); }
+        .result-table tr:last-child td { border-bottom: none; }
+        @media (max-width: 400px) {
+            .result-table th, .result-table td { padding: 12px 4px; font-size: 14px; }
+        }
+        .restart-quiz {
+            background: var(--accent); color: black; border: none;
+            padding: 18px; border-radius: 60px; font-size: 20px; font-weight: bold;
+            margin: 20px 0 30px; cursor: pointer; width: 100%;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        /* no floating FABs */
+        .fab-container { display: none; }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div id="searchView">
-        <input type="text" id="searchBar" placeholder="Search..." oninput="search()">
+    <!-- TOP NAVIGATION: home + search + 3 icon buttons -->
+    <div class="top-nav">
+        <button class="home-btn" id="homeBtn" onclick="goHome()" title="Home"><i class="fas fa-home"></i></button>
+        <div class="search-wrapper">
+            <input type="text" id="searchBar" placeholder="Search..." oninput="search()">
+        </div>
+        <div class="nav-icons">
+            <button class="nav-btn" id="quizNavBtn" onclick="startQuiz()" title="Quiz"><i class="fas fa-pencil-alt"></i></button>
+            <button class="nav-btn" id="flashcardNavBtn" onclick="toggleFlashcard()" title="Flashcards"><i class="fas fa-layer-group"></i></button>
+            <button class="nav-btn" id="themeNavBtn" onclick="toggleTheme()" title="Light/Dark"><i class="fas fa-sun"></i></button>
+        </div>
+    </div>
+
+    <!-- SEARCH VIEW (default active) -->
+    <div id="searchView" class="view active-view">
         <div id="results"></div>
     </div>
 
-    <div id="flashcardView">
+    <!-- FLASHCARD VIEW -->
+    <div id="flashcardView" class="view">
         <div id="fcContainer">
             <div class="fc-kanji" id="fcKanji">?</div>
             <div class="fc-bottom">
@@ -116,9 +350,14 @@
         </div>
     </div>
 
-    <div class="fab-container">
-        <button class="fab" onclick="toggleView()" id="viewBtn"><i class="fas fa-layer-group"></i></button>
-        <button class="fab" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-sun"></i></button>
+    <!-- QUIZ VIEW -->
+    <div id="quizView" class="view">
+        <div class="quiz-header">
+            <span class="quiz-progress" id="quizProgress">Q1/20</span>
+            <span id="quizScoreDisplay">0 / 20</span>
+        </div>
+        <div id="quizContainer"></div>
+        <div id="quizResultArea" style="display: none;"></div>
     </div>
 
     <script>
@@ -455,10 +694,243 @@
 { k: "沢山", h: "たくさん", e: "Many / A lot" },
 { k: "少し", h: "すこし", e: "A little" },
 { k: "幾つ", h: "いくつ", e: "How many / How old" },
+{ k: "危ない", h: "あぶない", e: "Dangerous" },
+{ k: "危険", h: "きけん", e: "Danger" },
+{ k: "注意", h: "ちゅうい", e: "Caution / Warning" },
+{ k: "止まれ", h: "とまれ", e: "Stop (sign)" },
+{ k: "押す", h: "おす", e: "To push" },
+{ k: "引く", h: "ひく", e: "To pull" },
+{ k: "非常口", h: "ひじょうぐち", e: "Emergency exit" },
+{ k: "入口", h: "いりぐち", e: "Entrance" },
+{ k: "出口", h: "でぐち", e: "Exit" },
+{ k: "階段", h: "かいだん", e: "Stairs" },
+{ k: "エスカレーター", h: "エスカレーター", e: "Escalator" },
+{ k: "エレベーター", h: "エレベーター", e: "Elevator" },
+{ k: "お手洗い", h: "おてあらい", e: "Restroom" },
+{ k: "化粧室", h: "けしょうしつ", e: "Powder room / Restroom" },
+{ k: "男子", h: "だんし", e: "Men / Boys" },
+{ k: "女子", h: "じょし", e: "Women / Girls" },
+{ k: "使用中", h: "しようちゅう", e: "In use / Occupied" },
+{ k: "空", h: "あき", e: "Vacant / Empty" },
+{ k: "故障中", h: "こしょうちゅう", e: "Out of order" },
+{ k: "準備中", h: "じゅんびちゅう", e: "Preparing / Not open yet" },
+{ k: "営業中", h: "えいぎょうちゅう", e: "Open for business" },
+{ k: "休業", h: "きゅうぎょう", e: "Closed / Business suspended" },
+{ k: "定休日", h: "ていきゅうび", e: "Regular holiday" },
+{ k: "満員", h: "まんいん", e: "Full / No vacancy" },
+{ k: "禁煙", h: "きんえん", e: "No smoking" },
+{ k: "喫煙", h: "きつえん", e: "Smoking allowed" },
+{ k: "立入禁止", h: "たちいりきんし", e: "No entry" },
+{ k: "駐車禁止", h: "ちゅうしゃきんし", e: "No parking" },
+{ k: "駐車場", h: "ちゅうしゃじょう", e: "Parking lot" },
+{ k: "一方通行", h: "いっぽうつうこう", e: "One way street" },
+{ k: "横断歩道", h: "おうだんほどう", e: "Pedestrian crossing" },
+{ k: "交差点", h: "こうさてん", e: "Intersection" },
+{ k: "曲がる", h: "まがる", e: "To turn" },
+{ k: "直進", h: "ちょくしん", e: "Go straight" },
+{ k: "止まる", h: "とまる", e: "To stop" },
+{ k: "渡る", h: "わたる", e: "To cross" },
+{ k: "運転", h: "うんてん", e: "Driving" },
+{ k: "運転手", h: "うんてんしゅ", e: "Driver" },
+{ k: "乗り場", h: "のりば", e: "Boarding place (bus/taxi)" },
+{ k: "改札口", h: "かいさつぐち", e: "Ticket gate" },
+{ k: "切符", h: "きっぷ", e: "Ticket" },
+{ k: "片道", h: "かたみち", e: "One way" },
+{ k: "往復", h: "おうふく", e: "Round trip" },
+{ k: "料金", h: "りょうきん", e: "Fee / Fare" },
+{ k: "運賃", h: "うんちん", e: "Transportation fare" },
+{ k: "時刻表", h: "じこくひょう", e: "Timetable" },
+{ k: "遅れる", h: "おくれる", e: "To be late" },
+{ k: "間に合う", h: "まにあう", e: "To be in time" },
+{ k: "乗り換え", h: "のりかえ", e: "Transfer" },
+{ k: "荷物", h: "にもつ", e: "Luggage" },
+{ k: "手荷物", h: "てにもつ", e: "Hand luggage" },
+{ k: "預ける", h: "あずける", e: "To deposit / To check in" },
+{ k: "空港", h: "くうこう", e: "Airport" },
+{ k: "飛行機", h: "ひこうき", e: "Airplane" },
+{ k: "電車", h: "でんしゃ", e: "Train" },
+{ k: "新幹線", h: "しんかんせん", e: "Bullet train" },
+{ k: "地下鉄", h: "ちかてつ", e: "Subway" },
+{ k: "バス停", h: "バスてい", e: "Bus stop" },
+{ k: "タクシー", h: "タクシー", e: "Taxi" },
+{ k: "自転車", h: "じてんしゃ", e: "Bicycle" },
+{ k: "歩く", h: "あるく", e: "To walk" },
+{ k: "走る", h: "はしる", e: "To run" },
+{ k: "速い", h: "はやい", e: "Fast" },
+{ k: "遅い", h: "おそい", e: "Slow / Late" },
+{ k: "近い", h: "ちかい", e: "Near" },
+{ k: "遠い", h: "とおい", e: "Far" },
+{ k: "地図", h: "ちず", e: "Map" },
+{ k: "住所", h: "じゅうしょ", e: "Address" },
+{ k: "電話番号", h: "でんわばんごう", e: "Phone number" },
+{ k: "郵便番号", h: "ゆうびんばんごう", e: "Postal code" },
+{ k: "手紙", h: "てがみ", e: "Letter" },
+{ k: "はがき", h: "はがき", e: "Postcard" },
+{ k: "切手", h: "きって", e: "Postage stamp" },
+{ k: "封筒", h: "ふうとう", e: "Envelope" },
+{ k: "送る", h: "おくる", e: "To send" },
+{ k: "受け取る", h: "うけとる", e: "To receive" },
+{ k: "渡す", h: "わたす", e: "To hand over" },
+{ k: "届く", h: "とどく", e: "To arrive / To reach" },
+{ k: "宅配", h: "たくはい", e: "Home delivery" },
+{ k: "住所", h: "じゅうしょ", e: "Address" },
+{ k: "名前", h: "なまえ", e: "Name" },
+{ k: "年齢", h: "ねんれい", e: "Age" },
+{ k: "生年月日", h: "せいねんがっぴ", e: "Birth date" },
+{ k: "性別", h: "せいべつ", e: "Gender" },
+{ k: "男", h: "おとこ", e: "Male" },
+{ k: "女", h: "おんな", e: "Female" },
+{ k: "職業", h: "しょくぎょう", e: "Occupation" },
+{ k: "会社員", h: "かいしゃいん", e: "Company employee" },
+{ k: "店員", h: "てんいん", e: "Shop clerk" },
+{ k: "警官", h: "けいかん", e: "Police officer" },
+{ k: "消防士", h: "しょうぼうし", e: "Firefighter" },
+{ k: "看護師", h: "かんごし", e: "Nurse" },
+{ k: "弁護士", h: "べんごし", e: "Lawyer" },
+{ k: "会計", h: "かいけい", e: "Accounting / Checkout" },
+{ k: "レシート", h: "レシート", e: "Receipt" },
+{ k: "領収書", h: "りょうしゅうしょ", e: "Receipt (formal)" },
+{ k: "値段", h: "ねだん", e: "Price" },
+{ k: "割引", h: "わりびき", e: "Discount" },
+{ k: "無料", h: "むりょう", e: "Free of charge" },
+{ k: "有料", h: "ゆうりょう", e: "Paid / Chargeable" },
+{ k: "税金", h: "ぜいきん", e: "Tax" },
+{ k: "消費税", h: "しょうひぜい", e: "Consumption tax" },
+{ k: "現金", h: "げんきん", e: "Cash" },
+{ k: "クレジットカード", h: "クレジットカード", e: "Credit card" },
+{ k: "電子マネー", h: "でんしマネー", e: "Electronic money" },
+{ k: "お釣り", h: "おつり", e: "Change (money)" },
+{ k: "財布", h: "さいふ", e: "Wallet" },
+{ k: "銀行", h: "ぎんこう", e: "Bank" },
+{ k: "ATM", h: "エーティーエム", e: "ATM" },
+{ k: "お金", h: "おかね", e: "Money" },
+{ k: "両替", h: "りょうがえ", e: "Money exchange" },
+{ k: "千円", h: "せんえん", e: "1000 yen" },
+{ k: "万円", h: "まんえん", e: "10000 yen" },
+{ k: "高い", h: "たかい", e: "Expensive" },
+{ k: "安い", h: "やすい", e: "Cheap" },
+{ k: "美味しい", h: "おいしい", e: "Delicious" },
+{ k: "不味い", h: "まずい", e: "Not tasty" },
+{ k: "温かい", h: "あたたかい", e: "Warm" },
+{ k: "冷たい", h: "つめたい", e: "Cold" },
+{ k: "熱い", h: "あつい", e: "Hot" },
+{ k: "生", h: "なま", e: "Raw / Fresh" },
+{ k: "冷凍", h: "れいとう", e: "Frozen" },
+{ k: "賞味期限", h: "しょうみきげん", e: "Best before date" },
+{ k: "消費期限", h: "しょうひきげん", e: "Expiration date" },
+{ k: "開ける", h: "あける", e: "To open" },
+{ k: "閉める", h: "しめる", e: "To close" },
+{ k: "点ける", h: "つける", e: "To turn on" },
+{ k: "消す", h: "けす", e: "To turn off / To erase" },
+{ k: "入れる", h: "いれる", e: "To put in" },
+{ k: "出す", h: "だす", e: "To take out" },
+{ k: "捨てる", h: "すてる", e: "To throw away" },
+{ k: "拾う", h: "ひろう", e: "To pick up" },
+{ k: "洗う", h: "あらう", e: "To wash" },
+{ k: "洗濯", h: "せんたく", e: "Laundry" },
+{ k: "干す", h: "ほす", e: "To dry" },
+{ k: "掃除", h: "そうじ", e: "Cleaning" },
+{ k: "拭く", h: "ふく", e: "To wipe" },
+{ k: "磨く", h: "みがく", e: "To brush / To polish" },
+{ k: "歯磨き", h: "はみがき", e: "Tooth brushing" },
+{ k: "風呂", h: "ふろ", e: "Bath" },
+{ k: "シャワー", h: "シャワー", e: "Shower" },
+{ k: "石鹸", h: "せっけん", e: "Soap" },
+{ k: "シャンプー", h: "シャンプー", e: "Shampoo" },
+{ k: "タオル", h: "タオル", e: "Towel" },
+{ k: "歯ブラシ", h: "はブラシ", e: "Toothbrush" },
+{ k: "洗剤", h: "せんざい", e: "Detergent" },
+{ k: "ゴミ", h: "ゴミ", e: "Trash" },
+{ k: "ゴミ箱", h: "ゴミばこ", e: "Trash can" },
+{ k: "資源ゴミ", h: "しげんゴミ", e: "Recyclable trash" },
+{ k: "燃えるゴミ", h: "もえるゴミ", e: "Burnable trash" },
+{ k: "燃えないゴミ", h: "もえないゴミ", e: "Non-burnable trash" },
+{ k: "粗大ゴミ", h: "そだいゴミ", e: "Bulky trash" },
+{ k: "天気予報", h: "てんきよほう", e: "Weather forecast" },
+{ k: "晴れ", h: "はれ", e: "Sunny" },
+{ k: "曇り", h: "くもり", e: "Cloudy" },
+{ k: "雨", h: "あめ", e: "Rain" },
+{ k: "雪", h: "ゆき", e: "Snow" },
+{ k: "嵐", h: "あらし", e: "Storm" },
+{ k: "台風", h: "たいふう", e: "Typhoon" },
+{ k: "地震", h: "じしん", e: "Earthquake" },
+{ k: "雷", h: "かみなり", e: "Thunder / Lightning" },
+{ k: "洪水", h: "こうずい", e: "Flood" },
+{ k: "警報", h: "けいほう", e: "Warning (emergency)" },
+{ k: "避難", h: "ひなん", e: "Evacuation" },
+{ k: "火事", h: "かじ", e: "Fire" },
+{ k: "救急車", h: "きゅうきゅうしゃ", e: "Ambulance" },
+{ k: "警察", h: "けいさつ", e: "Police" },
+{ k: "事故", h: "じこ", e: "Accident" },
+{ k: "怪我", h: "けが", e: "Injury" },
+{ k: "病気", h: "びょうき", e: "Sickness" },
+{ k: "熱", h: "ねつ", e: "Fever" },
+{ k: "咳", h: "せき", e: "Cough" },
+{ k: "頭痛", h: "ずつう", e: "Headache" },
+{ k: "腹痛", h: "ふくつう", e: "Stomach ache" },
+{ k: "歯痛", h: "はいた", e: "Toothache" },
+{ k: "風邪", h: "かぜ", e: "Cold (illness)" },
+{ k: "インフルエンザ", h: "インフルエンザ", e: "Flu" },
+{ k: "コロナ", h: "コロナ", e: "Coronavirus" },
+{ k: "ワクチン", h: "ワクチン", e: "Vaccine" },
+{ k: "病院", h: "びょういん", e: "Hospital" },
+{ k: "診療所", h: "しんりょうじょ", e: "Clinic" },
+{ k: "薬局", h: "やっきょく", e: "Pharmacy" },
+{ k: "処方箋", h: "しょほうせん", e: "Prescription" },
+{ k: "健康保険", h: "けんこうほけん", e: "Health insurance" },
+{ k: "診察", h: "しんさつ", e: "Medical examination" },
+{ k: "予約", h: "よやく", e: "Appointment" },
+{ k: "キャンセル", h: "キャンセル", e: "Cancellation" },
+{ k: "変更", h: "へんこう", e: "Change / Modification" },
+{ k: "確認", h: "かくにん", e: "Confirmation" },
         ];
 
-        let deck = [], history = [], currentCard = null, isFlashcardMode = false;
+        // ----- STATE -----
+        let deck = [], history = [], currentCard = null;
+        let currentView = 'search'; // 'search', 'flashcard', 'quiz'
+        
+        // Quiz state
+        let quizQuestions = [];
+        let currentQuizIndex = 0;
+        let userAnswers = [];
+        let quizFinished = false;
 
+        // ----- HOME: return to search view -----
+        function goHome() {
+            setActiveView('search');
+        }
+
+        // ----- VIEW MANAGEMENT -----
+        function setActiveView(viewName) {
+            document.getElementById('searchView').classList.remove('active-view');
+            document.getElementById('flashcardView').classList.remove('active-view');
+            document.getElementById('quizView').classList.remove('active-view');
+            
+            if (viewName === 'search') {
+                document.getElementById('searchView').classList.add('active-view');
+                currentView = 'search';
+            } else if (viewName === 'flashcard') {
+                document.getElementById('flashcardView').classList.add('active-view');
+                currentView = 'flashcard';
+                resetDeck();
+                showNext();
+            } else if (viewName === 'quiz') {
+                document.getElementById('quizView').classList.add('active-view');
+                currentView = 'quiz';
+                // quiz already started via startQuiz()
+            }
+        }
+
+        // Toggle flashcard on/off (if already in flashcard, go home; else go flashcard)
+        function toggleFlashcard() {
+            if (currentView === 'flashcard') {
+                setActiveView('search');
+            } else {
+                setActiveView('flashcard');
+            }
+        }
+
+        // ----- SEARCH -----
         function search() {
             const query = document.getElementById('searchBar').value.toLowerCase();
             const resultsDiv = document.getElementById('results');
@@ -479,14 +951,7 @@
             });
         }
 
-        function toggleView() {
-            isFlashcardMode = !isFlashcardMode;
-            document.getElementById('searchView').style.display = isFlashcardMode ? 'none' : 'flex';
-            document.getElementById('flashcardView').style.display = isFlashcardMode ? 'flex' : 'none';
-            document.querySelector('#viewBtn i').className = isFlashcardMode ? 'fas fa-magnifying-glass' : 'fas fa-layer-group';
-            if (isFlashcardMode) { resetDeck(); showNext(); }
-        }
-
+        // ----- FLASHCARD -----
         function resetDeck() {
             deck = [...kanjiData].sort(() => Math.random() - 0.5);
             history = []; currentCard = null;
@@ -495,17 +960,10 @@
         function displayCard(card) {
             currentCard = card;
             const kanjiEl = document.getElementById('fcKanji');
-            
-            // DYNAMIC FONT SCALING based on string length
             const len = card.k.length;
-            if (len > 5) {
-                kanjiEl.style.fontSize = 'clamp(40px, 12vw, 70px)';
-            } else if (len > 3) {
-                kanjiEl.style.fontSize = 'clamp(50px, 15vw, 100px)';
-            } else {
-                kanjiEl.style.fontSize = 'clamp(60px, 20vw, 140px)';
-            }
-
+            if (len > 5) kanjiEl.style.fontSize = 'clamp(40px, 12vw, 70px)';
+            else if (len > 3) kanjiEl.style.fontSize = 'clamp(50px, 15vw, 100px)';
+            else kanjiEl.style.fontSize = 'clamp(60px, 20vw, 140px)';
             kanjiEl.innerText = card.k;
             document.getElementById('fcHiragana').innerText = card.h;
             document.getElementById('fcEnglish').innerText = card.e;
@@ -524,23 +982,22 @@
             }
         }
 
-        // --- SWIPE LOGIC ---
-        let startX = 0;
-        let currentX = 0;
+        // Swipe for flashcard
+        let startX = 0, currentX = 0;
         const fcView = document.getElementById('flashcardView');
         const container = document.getElementById('fcContainer');
-
         fcView.addEventListener('touchstart', (e) => {
+            if (currentView !== 'flashcard') return;
             startX = e.touches[0].clientX;
-            container.style.transition = 'none'; 
+            container.style.transition = 'none';
         });
-
         fcView.addEventListener('touchmove', (e) => {
+            if (currentView !== 'flashcard') return;
             currentX = e.touches[0].clientX - startX;
             container.style.transform = `translateX(${currentX}px)`;
         });
-
         fcView.addEventListener('touchend', () => {
+            if (currentView !== 'flashcard') return;
             container.style.transition = 'transform 0.2s ease-out';
             if (currentX < -80) { 
                 container.style.transform = 'translateX(-100%)';
@@ -570,11 +1027,121 @@
             currentX = 0;
         });
 
+        // ----- QUIZ (Kanji first) -----
+        function startQuiz() {
+            const shuffled = [...kanjiData].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, 20);
+            
+            quizQuestions = selected.map(correctCard => {
+                let distractor;
+                do { distractor = kanjiData[Math.floor(Math.random() * kanjiData.length)]; } 
+                while (distractor.k === correctCard.k);
+                
+                const optionCorrect = { hiragana: correctCard.h, english: correctCard.e };
+                const optionWrong = { hiragana: distractor.h, english: distractor.e };
+                
+                const options = [optionCorrect, optionWrong];
+                if (Math.random() < 0.5) options.reverse();
+                
+                return {
+                    kanji: correctCard.k,
+                    correctHiragana: correctCard.h,
+                    options: options
+                };
+            });
+
+            currentQuizIndex = 0;
+            userAnswers = new Array(20).fill(null);
+            quizFinished = false;
+            renderQuiz();
+            setActiveView('quiz');
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            const resultArea = document.getElementById('quizResultArea');
+            const progress = document.getElementById('quizProgress');
+            const scoreDisplay = document.getElementById('quizScoreDisplay');
+            
+            if (quizFinished) {
+                container.style.display = 'none';
+                resultArea.style.display = 'block';
+                let html = `
+                    <table class="result-table">
+                        <thead><tr><th>Kanji</th><th>Your answer</th><th>Correct</th></tr></thead>
+                        <tbody>
+                `;
+                quizQuestions.forEach((q, idx) => {
+                    const ansIdx = userAnswers[idx];
+                    const selectedOption = ansIdx !== null ? q.options[ansIdx] : null;
+                    const selectedHiragana = selectedOption ? selectedOption.hiragana : '—';
+                    const isCorrect = (selectedOption && selectedOption.hiragana === q.correctHiragana);
+                    const rowClass = isCorrect ? 'correct-row' : 'wrong-row';
+                    html += `<tr class="${rowClass}">
+                        <td><strong>${q.kanji}</strong></td>
+                        <td>${selectedHiragana}</td>
+                        <td>${q.correctHiragana}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table><button class="restart-quiz" onclick="startQuiz()">Restart quiz</button>';
+                resultArea.innerHTML = html;
+                return;
+            }
+
+            container.style.display = 'block';
+            resultArea.style.display = 'none';
+            
+            const q = quizQuestions[currentQuizIndex];
+            const selectedIndex = userAnswers[currentQuizIndex];
+            
+            let optionsHtml = '';
+            q.options.forEach((opt, idx) => {
+                let extraClass = '';
+                if (selectedIndex !== null) {
+                    const isCorrectOption = (opt.hiragana === q.correctHiragana);
+                    extraClass = isCorrectOption ? 'correct-disabled' : 'wrong-disabled';
+                }
+                if (selectedIndex === idx) extraClass += ' selected';
+                
+                optionsHtml += `
+                    <div class="quiz-option ${extraClass}" onclick="selectOption(${idx})">
+                        <span class="option-hiragana">${opt.hiragana}</span>
+                        <span class="option-english">${opt.english}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="quiz-card">
+                    <div class="quiz-question-kanji">${q.kanji}</div>
+                    <div class="quiz-options">${optionsHtml}</div>
+                    <div class="quiz-footer">
+                        <button class="quiz-btn" ${currentQuizIndex === 0 ? 'disabled' : ''} onclick="prevQuiz()">Prev</button>
+                        <button class="quiz-btn" onclick="nextQuiz()">${currentQuizIndex === 19 ? 'Finish' : 'Next'}</button>
+                    </div>
+                </div>
+            `;
+            
+            progress.innerText = `Q${currentQuizIndex+1}/20`;
+            const answeredCount = userAnswers.filter(a => a !== null).length;
+            scoreDisplay.innerText = `${answeredCount} / 20`;
+        }
+
+        function selectOption(optIdx) {
+            if (quizFinished) return;
+            if (userAnswers[currentQuizIndex] !== null) return;
+            userAnswers[currentQuizIndex] = optIdx;
+            renderQuiz();
+        }
+
+        function prevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
+        function nextQuiz() { if (currentQuizIndex < 19) { currentQuizIndex++; renderQuiz(); } else { quizFinished = true; renderQuiz(); } }
+
+        // ----- THEME toggle + icon swap -----
         function toggleTheme() {
             const body = document.body;
-            const themeBtnIcon = document.querySelector('#themeBtn i');
+            const themeBtnIcon = document.querySelector('#themeNavBtn i');
             const currentTheme = body.getAttribute('data-theme');
-            
             if (currentTheme === 'dark') {
                 body.setAttribute('data-theme', 'light');
                 themeBtnIcon.className = 'fas fa-circle-half-stroke';
@@ -584,74 +1151,8 @@
             }
         }
 
+        // init search
         search();
-
-        // FIXED SERVICE WORKER REGISTRATION - No more auto-refresh
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // Removed the timestamp parameter that was causing unnecessary updates
-                navigator.serviceWorker.register('./sw.js').then(function(reg) {
-                    console.log('SW registered successfully');
-                    
-                    // Silently check for updates (no page reload)
-                    reg.update();
-                    
-                    // Optional: Just log when a new version is available without reloading
-                    reg.onupdatefound = () => {
-                        const installingWorker = reg.installing;
-                        installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed') {
-                                if (navigator.serviceWorker.controller) {
-                                    console.log('New version available - will be used next load');
-                                    // You could show a subtle notification here if you want
-                                } else {
-                                    console.log('Content cached for offline use');
-                                }
-                            }
-                        };
-                    };
-                }).catch(function(error) {
-                    console.log('SW registration failed:', error);
-                });
-            });
-        }
-        // Scroll hide/show for FABs
-let scrollTimeout;
-let lastScrollTop = 0;
-const fabContainer = document.querySelector('.fab-container');
-const resultsDiv = document.getElementById('results');
-
-resultsDiv.addEventListener('scroll', () => {
-    const scrollTop = resultsDiv.scrollTop;
-    
-    // Clear previous timeout
-    clearTimeout(scrollTimeout);
-    
-    // Hide FABs when scrolling down
-    if (scrollTop > lastScrollTop && scrollTop > 50) {
-        fabContainer.classList.add('hidden');
-    } 
-    // Show FABs when scrolling up
-    else if (scrollTop < lastScrollTop) {
-        fabContainer.classList.remove('hidden');
-    }
-    
-    lastScrollTop = scrollTop;
-    
-    // Auto-show after scrolling stops
-    scrollTimeout = setTimeout(() => {
-        fabContainer.classList.remove('hidden');
-    }, 1500);
-});
-
-// Show FABs when touch ends
-resultsDiv.addEventListener('touchend', () => {
-    scrollTimeout = setTimeout(() => {
-        fabContainer.classList.remove('hidden');
-    }, 300);
-});
     </script>
 </body>
 </html>
-
-
