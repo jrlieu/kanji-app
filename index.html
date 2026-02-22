@@ -338,6 +338,7 @@
             color: var(--text);
         }
         
+        /* Fixed passcode popup with side-by-side buttons */
         .passcode-overlay {
             position: fixed;
             top: 0;
@@ -357,9 +358,11 @@
             width: 90%;
             max-width: 400px;
             border: 1px solid gray;
+            text-align: center;
         }
         .passcode-box h2 {
             color: var(--text);
+            margin-bottom: 20px;
         }
         .passcode-box input {
             width: 100%;
@@ -371,6 +374,29 @@
             color: var(--text);
             border-radius: 30px;
             margin: 20px 0;
+            box-sizing: border-box;
+        }
+        
+        /* Button container for side-by-side buttons */
+        .passcode-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .passcode-buttons button {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .cancel-btn {
+            background: #666 !important;
+            color: white;
+        }
+        
+        .cancel-btn:hover {
+            background: #777 !important;
         }
         
         .admin-form {
@@ -468,7 +494,7 @@
     <div class="top-nav">
         <button class="home-btn" id="homeBtn" onclick="goHome()" title="Home"><i class="fas fa-home"></i></button>
         <div class="search-wrapper">
-            <input type="text" id="searchBar" placeholder="Search..." oninput="search()">
+            <input type="text" id="searchBar" placeholder="検索" oninput="search()">
         </div>
         <div class="nav-icons">
             <button class="admin-btn" id="adminNavBtn" onclick="showAdminPasscode()" title="Admin"><i class="fas fa-lock"></i></button>
@@ -621,20 +647,32 @@
             }
         }
 
-        // ----- ADMIN FUNCTIONS WITH AUTHENTICATION -----
+        // ----- ADMIN FUNCTIONS WITH FIXED PASSCODE POPUP -----
         function showAdminPasscode() {
             const overlay = document.createElement('div');
             overlay.className = 'passcode-overlay';
             overlay.id = 'passcodeOverlay';
             overlay.innerHTML = `
                 <div class="passcode-box">
-                    <h2>Enter Admin Password</h2>
-                    <input type="password" id="passcodeInput" placeholder="******" maxlength="6">
-                    <button class="admin-submit" onclick="checkPasscode()">Submit</button>
-                    <button class="admin-submit" onclick="closePasscode()" style="background: gray; margin-top: 10px;">Cancel</button>
+                    <h2>Enter Password</h2>
+                    <input type="password" id="passcodeInput" placeholder="******" maxlength="6" autofocus>
+                    <div class="passcode-buttons">
+                        <button class="admin-submit" onclick="checkPasscode()">Submit</button>
+                        <button class="admin-submit cancel-btn" onclick="closePasscode()">Cancel</button>
+                    </div>
                 </div>
             `;
             document.body.appendChild(overlay);
+            
+            // Auto-focus the input
+            document.getElementById('passcodeInput').focus();
+            
+            // Press Enter to submit
+            document.getElementById('passcodeInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkPasscode();
+                }
+            });
         }
 
         function closePasscode() {
@@ -642,14 +680,12 @@
             if (overlay) overlay.remove();
         }
 
-        // UPDATED: Use Firebase Authentication
         async function checkPasscode() {
             const input = document.getElementById('passcodeInput').value;
             
             try {
                 // Sign in with email/password
-                // Use the passcode as password for admin@kanjidict.com
-                await auth.signInWithEmailAndPassword('kanji@admin.com', input);
+                await auth.signInWithEmailAndPassword('admin@kanjidict.com', input);
                 
                 isAdminAuthenticated = true;
                 closePasscode();
@@ -661,7 +697,6 @@
             }
         }
 
-        // UPDATED: Sign out function
         function logoutAdmin() {
             auth.signOut().then(() => {
                 isAdminAuthenticated = false;
