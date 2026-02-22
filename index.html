@@ -81,6 +81,11 @@
             transition: 0.2s;
         }
         #searchBar:focus { border-color: var(--accent); }
+        #searchBar:disabled {
+            opacity: 0.7;
+            background: var(--quiz-option-bg);
+            cursor: not-allowed;
+        }
         
         .nav-icons {
             display: flex;
@@ -107,8 +112,8 @@
         .nav-btn:active { transform: scale(0.92); }
 
         .admin-btn {
-            background: #ff4757;
-            color: white;
+            background: var(--accent);;
+            color: black;
             border: none;
             width: 44px;
             height: 44px;
@@ -186,6 +191,68 @@
             overflow-y: auto;
             padding: 16px 16px 30px;
         }
+        
+        /* Quiz Setup Screen */
+        .quiz-setup {
+            background: var(--card-bg);
+            border-radius: 36px;
+            padding: 40px 20px;
+            border: 1px solid gray;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .quiz-setup h2 {
+            color: var(--text);
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .quiz-option-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .quiz-length-btn {
+            background: var(--quiz-option-bg);
+            border: 2px solid var(--border);
+            border-radius: 60px;
+            padding: 20px 40px;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+            color: var(--text);
+            min-width: 120px;
+        }
+        .quiz-length-btn.selected {
+            border-color: var(--accent);
+            background: rgba(129, 236, 236, 0.2);
+            transform: scale(1.05);
+        }
+        .quiz-length-btn:hover {
+            transform: scale(1.02);
+        }
+        .start-quiz-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 60px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: opacity 0.2s;
+        }
+        .start-quiz-btn:disabled {
+            background: #666;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .start-quiz-btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        
         .quiz-header {
             display: flex; 
             justify-content: space-between; 
@@ -206,14 +273,23 @@
             margin-bottom: 20px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         }
+        .quiz-question-container {
+            text-align: center;
+            margin: 10px 0 30px;
+        }
         .quiz-question-kanji {
             font-size: clamp(70px, 22vw, 150px); 
             font-weight: 800;
-            text-align: center; 
-            margin: 10px 0 30px; 
             line-height: 1.2;
             letter-spacing: 4px; 
             text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .quiz-question-hiragana {
+            font-size: clamp(24px, 6vw, 40px);
+            color: var(--accent);
+            font-weight: 500;
+            letter-spacing: 2px;
         }
         .quiz-options {
             display: flex; 
@@ -230,11 +306,10 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 12px;
             transition: 0.15s; 
             cursor: pointer; 
-            flex-wrap: wrap;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            color: var(--text);
         }
         .quiz-option.selected {
             border-color: var(--accent); 
@@ -252,19 +327,6 @@
             background: var(--wrong-bg); 
             pointer-events: none;
             opacity: 0.7;
-        }
-        .option-hiragana {
-            font-weight: 800; 
-            font-size: 26px; 
-            color: var(--accent);
-        }
-        .option-english {
-            font-size: 18px; 
-            color: var(--sub-text); 
-            font-style: italic; 
-            background: rgba(128,128,128,0.1); 
-            padding: 4px 12px; 
-            border-radius: 40px;
         }
         .quiz-footer {
             display: flex; 
@@ -287,7 +349,11 @@
             transition: opacity 0.2s; 
             text-align: center;
         }
-        .quiz-btn:disabled { opacity: 0.25; pointer-events: none; }
+        .quiz-btn:disabled { 
+            opacity: 0.25; 
+            pointer-events: none; 
+            cursor: not-allowed;
+        }
 
         #quizResultArea { padding: 8px 4px 20px; }
         .result-table {
@@ -336,6 +402,15 @@
         
         #adminView h2, #adminView h3 {
             color: var(--text);
+        }
+        
+        /* Duplicate warning style */
+        .duplicate-warning {
+            color: #ff4757;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
         }
         
         /* Fixed passcode popup with side-by-side buttons */
@@ -437,6 +512,12 @@
             opacity: 0.9;
         }
         
+        .admin-submit:disabled {
+            background: #666;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         .logout-btn {
             background: #ff4757 !important;
             color: white;
@@ -497,10 +578,10 @@
             <input type="text" id="searchBar" placeholder="検索" oninput="search()">
         </div>
         <div class="nav-icons">
-            <button class="admin-btn" id="adminNavBtn" onclick="showAdminPasscode()" title="Admin"><i class="fas fa-lock"></i></button>
-            <button class="nav-btn" id="quizNavBtn" onclick="startQuiz()" title="Quiz"><i class="fas fa-pencil-alt"></i></button>
+            <button class="nav-btn" id="quizNavBtn" onclick="showQuizSetup()" title="Quiz"><i class="fas fa-pencil-alt"></i></button>
             <button class="nav-btn" id="flashcardNavBtn" onclick="toggleFlashcard()" title="Flashcards"><i class="fas fa-layer-group"></i></button>
             <button class="nav-btn" id="themeNavBtn" onclick="toggleTheme()" title="Light/Dark"><i class="fas fa-sun"></i></button>
+            <button class="admin-btn" id="adminNavBtn" onclick="showAdminPasscode()" title="Admin"><i class="fas fa-lock"></i></button>
         </div>
     </div>
 
@@ -519,24 +600,37 @@
     </div>
 
     <div id="quizView" class="view">
-        <div class="quiz-header">
-            <span class="quiz-progress" id="quizProgress">Q1/20</span>
-            <span id="quizScoreDisplay">0 / 20</span>
+        <div id="quizSetupScreen" class="quiz-setup">
+            <h2>📝 Quiz Setup</h2>
+            <p style="color: var(--sub-text); margin-bottom: 20px;">How many questions?</p>
+            <div class="quiz-option-buttons">
+                <button class="quiz-length-btn" onclick="selectQuizLength(10)">10</button>
+                <button class="quiz-length-btn" onclick="selectQuizLength(20)">20</button>
+            </div>
+            <button class="start-quiz-btn" id="startQuizBtn" onclick="startQuiz()" disabled>Start Quiz</button>
         </div>
-        <div id="quizContainer"></div>
-        <div id="quizResultArea" style="display: none;"></div>
+        
+        <div id="quizScreen" style="display: none;">
+            <div class="quiz-header">
+                <span class="quiz-progress" id="quizProgress">Q1/20</span>
+                <span id="quizScoreDisplay">0 / 20</span>
+            </div>
+            <div id="quizContainer"></div>
+            <div id="quizResultArea" style="display: none;"></div>
+        </div>
     </div>
 
     <div id="adminView" class="view">
         <div style="padding: 20px;">
             <h2>Admin Panel</h2>
             <div class="admin-form">
-                <input type="text" id="newKanji" placeholder="Kanji (e.g., 催促)">
+                <input type="text" id="newKanji" placeholder="Kanji (e.g., 催促)" oninput="checkDuplicateKanji()">
+                <div id="duplicateWarning" class="duplicate-warning">⚠️ This kanji already exists!</div>
                 <input type="text" id="newHiragana" placeholder="Hiragana (e.g., さいそく)">
                 <textarea id="newEnglish" placeholder="English meaning (e.g., To urge / To press)"></textarea>
-                <button class="admin-submit" onclick="addKanjiEntry()">Add Entry</button>
+                <button class="admin-submit" id="addEntryBtn" onclick="addKanjiEntry()">Add Entry</button>
             </div>
-            <h3>Existing Entries</h3>
+            <h3>Existing Entries (Newest First)</h3>
             <div id="entryList" class="entry-list"></div>
             <button class="admin-submit logout-btn" onclick="logoutAdmin()">Logout</button>
         </div>
@@ -572,6 +666,7 @@
         let userAnswers = [];
         let quizFinished = false;
         let isAdminAuthenticated = false;
+        let selectedQuizLength = null;
 
         // Check auth state
         auth.onAuthStateChanged((user) => {
@@ -585,18 +680,21 @@
             }
         });
 
-        // Load data from Firestore
+        // Load data from Firestore - ORDER BY TIMESTAMP DESC (newest first)
         function loadKanjiData() {
-            db.collection('kanji').get().then((querySnapshot) => {
+            db.collection('kanji')
+              .orderBy('timestamp', 'desc')  // This orders by timestamp descending (newest first)
+              .get()
+              .then((querySnapshot) => {
                 kanjiData = [];
                 querySnapshot.forEach((doc) => {
                     kanjiData.push(doc.data());
                 });
-                kanjiData.sort((a, b) => a.k.localeCompare(b.k));
-                search();
-                console.log('Data loaded:', kanjiData);
+                search();  // This will display in newest first order
+                console.log('Data loaded (newest first):', kanjiData);
             }).catch((error) => {
                 console.log('Error loading data:', error);
+                // Fallback data if offline
                 kanjiData = [
                     { k: "催促", h: "さいそく", e: "To urge / To press someone for an answer" },
                     { k: "涙", h: "なみだ", e: "Tears" },
@@ -613,6 +711,9 @@
         }
 
         function setActiveView(viewName) {
+            // Update search bar based on view
+            const searchBar = document.getElementById('searchBar');
+            
             document.getElementById('searchView').classList.remove('active-view');
             document.getElementById('flashcardView').classList.remove('active-view');
             document.getElementById('quizView').classList.remove('active-view');
@@ -621,18 +722,27 @@
             if (viewName === 'search') {
                 document.getElementById('searchView').classList.add('active-view');
                 currentView = 'search';
+                searchBar.disabled = false;
+                searchBar.placeholder = '検索';
                 search();
             } else if (viewName === 'flashcard') {
                 document.getElementById('flashcardView').classList.add('active-view');
                 currentView = 'flashcard';
+                searchBar.disabled = true;
+                searchBar.placeholder = '暗記';
                 resetDeck();
                 showNext();
             } else if (viewName === 'quiz') {
                 document.getElementById('quizView').classList.add('active-view');
                 currentView = 'quiz';
+                searchBar.disabled = true;
+                searchBar.placeholder = '試験';
+                showQuizSetup();
             } else if (viewName === 'admin') {
                 document.getElementById('adminView').classList.add('active-view');
                 currentView = 'admin';
+                searchBar.disabled = true;
+                searchBar.placeholder = '管理';
                 if (isAdminAuthenticated) {
                     displayEntries();
                 }
@@ -644,6 +754,54 @@
                 setActiveView('search');
             } else {
                 setActiveView('flashcard');
+            }
+        }
+
+        // ----- QUIZ SETUP -----
+        function showQuizSetup() {
+            setActiveView('quiz');
+            document.getElementById('quizSetupScreen').style.display = 'block';
+            document.getElementById('quizScreen').style.display = 'none';
+            selectedQuizLength = null;
+            document.querySelectorAll('.quiz-length-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById('startQuizBtn').disabled = true;
+        }
+
+        function selectQuizLength(length) {
+            selectedQuizLength = length;
+            document.querySelectorAll('.quiz-length-btn').forEach(btn => {
+                if (btn.textContent == length) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            document.getElementById('startQuizBtn').disabled = false;
+        }
+
+        // ----- DUPLICATE KANJI CHECK -----
+        function checkDuplicateKanji() {
+            const kanjiInput = document.getElementById('newKanji').value.trim();
+            const warningDiv = document.getElementById('duplicateWarning');
+            const addBtn = document.getElementById('addEntryBtn');
+            
+            if (!kanjiInput) {
+                warningDiv.style.display = 'none';
+                addBtn.disabled = false;
+                return;
+            }
+            
+            // Check if kanji already exists in kanjiData
+            const exists = kanjiData.some(item => item.k === kanjiInput);
+            
+            if (exists) {
+                warningDiv.style.display = 'block';
+                addBtn.disabled = true;
+            } else {
+                warningDiv.style.display = 'none';
+                addBtn.disabled = false;
             }
         }
 
@@ -708,15 +866,18 @@
 
         async function displayEntries() {
             const entryList = document.getElementById('entryList');
-            const snapshot = await db.collection('kanji').get();
+            // Order by timestamp descending (newest first)
+            const snapshot = await db.collection('kanji').orderBy('timestamp', 'desc').get();
             let html = '';
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                const timestamp = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'No date';
                 html += `
                     <div class="entry-item">
                         <div>
                             <strong>${data.k}</strong> - ${data.h}<br>
-                            <small>${data.e}</small>
+                            <small>${data.e}</small><br>
+                            <small style="font-size: 12px; opacity: 0.5;">Added: ${timestamp}</small>
                         </div>
                         <button onclick="deleteEntry('${doc.id}')">Delete</button>
                     </div>
@@ -735,6 +896,13 @@
                 return;
             }
 
+            // Double-check for duplicate before adding (in case data changed)
+            const exists = kanjiData.some(item => item.k === kanji);
+            if (exists) {
+                alert('This kanji already exists! Duplicate entries are not allowed.');
+                return;
+            }
+
             try {
                 await db.collection('kanji').add({
                     k: kanji,
@@ -746,6 +914,10 @@
                 document.getElementById('newKanji').value = '';
                 document.getElementById('newHiragana').value = '';
                 document.getElementById('newEnglish').value = '';
+                
+                // Hide warning and enable button
+                document.getElementById('duplicateWarning').style.display = 'none';
+                document.getElementById('addEntryBtn').disabled = false;
 
                 loadKanjiData();
                 displayEntries();
@@ -879,28 +1051,61 @@
 
         // ----- QUIZ -----
         function startQuiz() {
+            if (!selectedQuizLength) {
+                alert('Please select number of questions!');
+                return;
+            }
+            
             if (kanjiData.length < 2) {
                 alert('Need at least 2 kanji entries for quiz!');
                 return;
             }
 
+            // Hide setup, show quiz screen
+            document.getElementById('quizSetupScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'block';
+
             const shuffled = [...kanjiData].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, Math.min(20, shuffled.length));
+            const selected = shuffled.slice(0, Math.min(selectedQuizLength, shuffled.length));
             
             quizQuestions = selected.map(correctCard => {
-                let distractor;
-                do { distractor = kanjiData[Math.floor(Math.random() * kanjiData.length)]; } 
-                while (distractor.k === correctCard.k);
+                // Get 3 random distractors (different from correct card)
+                const distractors = [];
+                const otherCards = kanjiData.filter(item => item.k !== correctCard.k);
                 
-                const optionCorrect = { hiragana: correctCard.h, english: correctCard.e };
-                const optionWrong = { hiragana: distractor.h, english: distractor.e };
+                // Shuffle other cards and take up to 3
+                const shuffledOthers = [...otherCards].sort(() => Math.random() - 0.5);
+                for (let i = 0; i < Math.min(3, shuffledOthers.length); i++) {
+                    distractors.push({
+                        english: shuffledOthers[i].e
+                    });
+                }
                 
-                const options = [optionCorrect, optionWrong];
-                if (Math.random() < 0.5) options.reverse();
+                // If we don't have enough distractors, duplicate some
+                while (distractors.length < 3) {
+                    distractors.push({
+                        english: otherCards[0]?.e || 'Unknown'
+                    });
+                }
+                
+                // Create options array with correct answer + 3 distractors
+                const options = [
+                    { english: correctCard.e, isCorrect: true },
+                    { english: distractors[0].english, isCorrect: false },
+                    { english: distractors[1].english, isCorrect: false },
+                    { english: distractors[2].english, isCorrect: false }
+                ];
+                
+                // Shuffle options
+                for (let i = options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [options[i], options[j]] = [options[j], options[i]];
+                }
                 
                 return {
                     kanji: correctCard.k,
-                    correctHiragana: correctCard.h,
+                    hiragana: correctCard.h,
+                    correctEnglish: correctCard.e,
                     options: options
                 };
             });
@@ -909,7 +1114,6 @@
             userAnswers = new Array(quizQuestions.length).fill(null);
             quizFinished = false;
             renderQuiz();
-            setActiveView('quiz');
         }
 
         function renderQuiz() {
@@ -928,17 +1132,16 @@
                 `;
                 quizQuestions.forEach((q, idx) => {
                     const ansIdx = userAnswers[idx];
-                    const selectedOption = ansIdx !== null ? q.options[ansIdx] : null;
-                    const selectedHiragana = selectedOption ? selectedOption.hiragana : '—';
-                    const isCorrect = (selectedOption && selectedOption.hiragana === q.correctHiragana);
+                    const selectedEnglish = ansIdx !== null ? q.options[ansIdx].english : '—';
+                    const isCorrect = (ansIdx !== null && q.options[ansIdx].isCorrect);
                     const rowClass = isCorrect ? 'correct-row' : 'wrong-row';
                     html += `<tr class="${rowClass}">
-                        <td><strong>${q.kanji}</strong></td>
-                        <td>${selectedHiragana}</td>
-                        <td>${q.correctHiragana}</td>
+                        <td><strong>${q.kanji}</strong><br><small>${q.hiragana}</small></td>
+                        <td>${selectedEnglish}</td>
+                        <td>${q.correctEnglish}</td>
                     </tr>`;
                 });
-                html += '</tbody></table><button class="restart-quiz" onclick="startQuiz()">Restart quiz</button>';
+                html += '</tbody></table><button class="restart-quiz" onclick="showQuizSetup()">Take another quiz</button>';
                 resultArea.innerHTML = html;
                 return;
             }
@@ -953,26 +1156,27 @@
             q.options.forEach((opt, idx) => {
                 let extraClass = '';
                 if (selectedIndex !== null) {
-                    const isCorrectOption = (opt.hiragana === q.correctHiragana);
-                    extraClass = isCorrectOption ? 'correct-disabled' : 'wrong-disabled';
+                    extraClass = opt.isCorrect ? 'correct-disabled' : 'wrong-disabled';
                 }
                 if (selectedIndex === idx) extraClass += ' selected';
                 
                 optionsHtml += `
                     <div class="quiz-option ${extraClass}" onclick="selectOption(${idx})">
-                        <span class="option-hiragana">${opt.hiragana}</span>
-                        <span class="option-english">${opt.english}</span>
+                        ${opt.english}
                     </div>
                 `;
             });
 
             container.innerHTML = `
                 <div class="quiz-card">
-                    <div class="quiz-question-kanji">${q.kanji}</div>
+                    <div class="quiz-question-container">
+                        <div class="quiz-question-kanji">${q.kanji}</div>
+                        <div class="quiz-question-hiragana">${q.hiragana}</div>
+                    </div>
                     <div class="quiz-options">${optionsHtml}</div>
                     <div class="quiz-footer">
                         <button class="quiz-btn" ${currentQuizIndex === 0 ? 'disabled' : ''} onclick="prevQuiz()">Prev</button>
-                        <button class="quiz-btn" onclick="nextQuiz()">${currentQuizIndex === quizQuestions.length-1 ? 'Finish' : 'Next'}</button>
+                        <button class="quiz-btn" id="nextQuizBtn" onclick="nextQuiz()" ${selectedIndex === null ? 'disabled' : ''}>${currentQuizIndex === quizQuestions.length-1 ? 'Finish' : 'Next'}</button>
                     </div>
                 </div>
             `;
@@ -990,7 +1194,13 @@
         }
 
         function prevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
+        
         function nextQuiz() { 
+            // Check if current question is answered
+            if (userAnswers[currentQuizIndex] === null) {
+                return; // Don't proceed if not answered
+            }
+            
             if (currentQuizIndex < quizQuestions.length-1) { 
                 currentQuizIndex++; 
                 renderQuiz(); 
@@ -1016,4 +1226,3 @@
     </script>
 </body>
 </html>
-
