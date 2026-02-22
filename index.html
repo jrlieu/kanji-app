@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KanjiDict — home + top nav</title>
+    <title>KanjiDict — with Authentication</title>
     <link rel="manifest" href="manifest.json?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
-        /* Your existing styles remain the same */
         * { box-sizing: border-box; }
         :root {
             --bg: #000; --card-bg: #000; --text: #ffffff;
@@ -35,7 +34,6 @@
             transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* ----- TOP NAVIGATION (home + search + 3 icons) ----- */
         .top-nav {
             display: flex;
             align-items: center;
@@ -108,11 +106,29 @@
         }
         .nav-btn:active { transform: scale(0.92); }
 
-        /* views container */
+        .admin-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: 0.1s;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .admin-btn:active { transform: scale(0.92); }
+
         .view {
             display: none;
             flex-direction: column;
-            height: calc(100% - 65px); /* top-nav height ~65px */
+            height: calc(100% - 65px);
             width: 100%;
             position: absolute;
             top: 65px;
@@ -120,7 +136,6 @@
         }
         .active-view { display: flex; }
 
-        /* SEARCH VIEW results */
         #results { 
             flex: 1; 
             overflow-y: auto; 
@@ -134,7 +149,6 @@
             border: 1px solid var(--border);
         }
 
-        /* FLASHCARD VIEW */
         #flashcardView {
             justify-content: center;
             align-items: flex-start;
@@ -167,7 +181,6 @@
         .hiragana { color: var(--accent); font-size: 22px; font-weight: 500; }
         .english { color: var(--sub-text); font-size: 20px; font-style: italic; }
 
-        /* QUIZ VIEW */
         #quizView {
             background: var(--bg);
             overflow-y: auto;
@@ -276,7 +289,6 @@
         }
         .quiz-btn:disabled { opacity: 0.25; pointer-events: none; }
 
-        /* result table */
         #quizResultArea { padding: 8px 4px 20px; }
         .result-table {
             width: 100%;
@@ -316,33 +328,12 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.5);
         }
 
-        /* Admin panel styles - FIXED for visibility */
-        .admin-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: 0.1s;
-            border: 1px solid rgba(255,255,255,0.2);
-            flex-shrink: 0;
-        }
-        .admin-btn:active { transform: scale(0.92); }
-        
         #adminView {
             background: var(--bg);
             overflow-y: auto;
             padding: 16px;
         }
         
-        /* Admin panel text colors */
         #adminView h2, #adminView h3 {
             color: var(--text);
         }
@@ -382,7 +373,6 @@
             margin: 20px 0;
         }
         
-        /* Admin form - FIXED visibility */
         .admin-form {
             display: flex;
             flex-direction: column;
@@ -406,7 +396,6 @@
             resize: vertical;
         }
         
-        /* Submit button - FIXED colors */
         .admin-submit {
             background: #00b894;
             color: white;
@@ -422,14 +411,12 @@
             opacity: 0.9;
         }
         
-        /* Logout button - FIXED colors */
         .logout-btn {
             background: #ff4757 !important;
             color: white;
             margin-top: 20px;
         }
         
-        /* Entry list - FIXED visibility */
         .entry-list {
             margin-top: 20px;
             max-height: 400px;
@@ -467,7 +454,6 @@
             opacity: 0.9;
         }
         
-        /* Loading and error states */
         .loading {
             color: var(--text);
             text-align: center;
@@ -479,7 +465,6 @@
 </head>
 <body data-theme="dark">
 
-    <!-- TOP NAVIGATION: home + search + 4 icons (added admin) -->
     <div class="top-nav">
         <button class="home-btn" id="homeBtn" onclick="goHome()" title="Home"><i class="fas fa-home"></i></button>
         <div class="search-wrapper">
@@ -493,12 +478,10 @@
         </div>
     </div>
 
-    <!-- SEARCH VIEW (default active) -->
     <div id="searchView" class="view active-view">
         <div id="results"></div>
     </div>
 
-    <!-- FLASHCARD VIEW -->
     <div id="flashcardView" class="view">
         <div id="fcContainer">
             <div class="fc-kanji" id="fcKanji">?</div>
@@ -509,7 +492,6 @@
         </div>
     </div>
 
-    <!-- QUIZ VIEW -->
     <div id="quizView" class="view">
         <div class="quiz-header">
             <span class="quiz-progress" id="quizProgress">Q1/20</span>
@@ -519,7 +501,6 @@
         <div id="quizResultArea" style="display: none;"></div>
     </div>
 
-    <!-- ADMIN VIEW -->
     <div id="adminView" class="view">
         <div style="padding: 20px;">
             <h2>Admin Panel</h2>
@@ -538,6 +519,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
     <script>
         // Firebase configuration
@@ -553,24 +535,42 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         // Global variable for kanji data
         let kanjiData = [];
+        let deck = [], history = [], currentCard = null;
+        let currentView = 'search';
+        let quizQuestions = [];
+        let currentQuizIndex = 0;
+        let userAnswers = [];
+        let quizFinished = false;
+        let isAdminAuthenticated = false;
 
-        // Load data from Firestore on startup
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                isAdminAuthenticated = true;
+                if (currentView === 'admin') {
+                    displayEntries();
+                }
+            } else {
+                isAdminAuthenticated = false;
+            }
+        });
+
+        // Load data from Firestore
         function loadKanjiData() {
             db.collection('kanji').get().then((querySnapshot) => {
                 kanjiData = [];
                 querySnapshot.forEach((doc) => {
                     kanjiData.push(doc.data());
                 });
-                // Sort by kanji or any order you prefer
                 kanjiData.sort((a, b) => a.k.localeCompare(b.k));
-                search(); // Refresh search view
+                search();
                 console.log('Data loaded:', kanjiData);
             }).catch((error) => {
                 console.log('Error loading data:', error);
-                // Fallback to local data if Firebase fails
                 kanjiData = [
                     { k: "催促", h: "さいそく", e: "To urge / To press someone for an answer" },
                     { k: "涙", h: "なみだ", e: "Tears" },
@@ -580,28 +580,12 @@
             });
         }
 
-        // Call loadKanjiData when page loads
         window.addEventListener('load', loadKanjiData);
 
-        // ----- STATE -----
-        let deck = [], history = [], currentCard = null;
-        let currentView = 'search'; // 'search', 'flashcard', 'quiz', 'admin'
-        
-        // Quiz state
-        let quizQuestions = [];
-        let currentQuizIndex = 0;
-        let userAnswers = [];
-        let quizFinished = false;
-
-        // Admin state
-        let isAdminAuthenticated = false;
-
-        // ----- HOME: return to search view -----
         function goHome() {
             setActiveView('search');
         }
 
-        // ----- VIEW MANAGEMENT -----
         function setActiveView(viewName) {
             document.getElementById('searchView').classList.remove('active-view');
             document.getElementById('flashcardView').classList.remove('active-view');
@@ -611,7 +595,7 @@
             if (viewName === 'search') {
                 document.getElementById('searchView').classList.add('active-view');
                 currentView = 'search';
-                search(); // Refresh search results
+                search();
             } else if (viewName === 'flashcard') {
                 document.getElementById('flashcardView').classList.add('active-view');
                 currentView = 'flashcard';
@@ -629,7 +613,6 @@
             }
         }
 
-        // Toggle flashcard on/off
         function toggleFlashcard() {
             if (currentView === 'flashcard') {
                 setActiveView('search');
@@ -638,15 +621,14 @@
             }
         }
 
-        // ----- ADMIN FUNCTIONS -----
+        // ----- ADMIN FUNCTIONS WITH AUTHENTICATION -----
         function showAdminPasscode() {
-            // Create passcode overlay
             const overlay = document.createElement('div');
             overlay.className = 'passcode-overlay';
             overlay.id = 'passcodeOverlay';
             overlay.innerHTML = `
                 <div class="passcode-box">
-                    <h2>Enter Passcode</h2>
+                    <h2>Enter Admin Password</h2>
                     <input type="password" id="passcodeInput" placeholder="******" maxlength="6">
                     <button class="admin-submit" onclick="checkPasscode()">Submit</button>
                     <button class="admin-submit" onclick="closePasscode()" style="background: gray; margin-top: 10px;">Cancel</button>
@@ -660,17 +642,33 @@
             if (overlay) overlay.remove();
         }
 
+        // UPDATED: Use Firebase Authentication
         async function checkPasscode() {
             const input = document.getElementById('passcodeInput').value;
             
-            if (input === '092690') {
+            try {
+                // Sign in with email/password
+                // Use the passcode as password for admin@kanjidict.com
+                await auth.signInWithEmailAndPassword('kanji@admin.com', input);
+                
                 isAdminAuthenticated = true;
                 closePasscode();
                 setActiveView('admin');
                 displayEntries();
-            } else {
-                alert('Wrong passcode!');
+            } catch (error) {
+                alert('Wrong password!');
+                console.error(error);
             }
+        }
+
+        // UPDATED: Sign out function
+        function logoutAdmin() {
+            auth.signOut().then(() => {
+                isAdminAuthenticated = false;
+                setActiveView('search');
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+            });
         }
 
         async function displayEntries() {
@@ -710,12 +708,10 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Clear form
                 document.getElementById('newKanji').value = '';
                 document.getElementById('newHiragana').value = '';
                 document.getElementById('newEnglish').value = '';
 
-                // Refresh data
                 loadKanjiData();
                 displayEntries();
                 alert('Entry added successfully!');
@@ -738,11 +734,6 @@
             }
         }
 
-        function logoutAdmin() {
-            isAdminAuthenticated = false;
-            setActiveView('search');
-        }
-
         // ----- SEARCH -----
         function search() {
             const query = document.getElementById('searchBar').value.toLowerCase();
@@ -750,7 +741,7 @@
             resultsDiv.innerHTML = '';
             
             if (!kanjiData || kanjiData.length === 0) {
-                resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+                resultsDiv.innerHTML = '<div class="loading">Loading...</div>';
                 return;
             }
 
@@ -759,7 +750,7 @@
             ) : kanjiData;
 
             if (filtered.length === 0) {
-                resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;">No results found</div>';
+                resultsDiv.innerHTML = '<div class="loading">No results found</div>';
                 return;
             }
 
@@ -851,7 +842,7 @@
             currentX = 0;
         });
 
-        // ----- QUIZ (Kanji first) -----
+        // ----- QUIZ -----
         function startQuiz() {
             if (kanjiData.length < 2) {
                 alert('Need at least 2 kanji entries for quiz!');
@@ -974,7 +965,7 @@
             } 
         }
 
-        // ----- THEME toggle + icon swap -----
+        // ----- THEME toggle -----
         function toggleTheme() {
             const body = document.body;
             const themeBtnIcon = document.querySelector('#themeNavBtn i');
