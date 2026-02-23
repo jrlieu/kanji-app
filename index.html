@@ -750,18 +750,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
         }
-        .entry-item div {
+        .entry-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .entry-content strong {
+            color: var(--text);
+            font-size: 18px;
+        }
+        .entry-content div {
             color: var(--text);
             word-break: break-word;
+            margin: 3px 0;
         }
-        .entry-item strong {
-            color: var(--text);
-        }
-        .entry-item small {
+        .entry-content small {
             color: var(--sub-text);
+            font-size: 12px;
         }
-        .entry-item button {
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .edit-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .delete-btn {
             background: #ff4757;
             color: white;
             border: none;
@@ -769,10 +791,75 @@
             border-radius: 20px;
             cursor: pointer;
             transition: opacity 0.2s;
-            flex-shrink: 0;
         }
-        .entry-item button:hover {
+        .edit-btn:hover, .delete-btn:hover {
             opacity: 0.9;
+        }
+        
+        /* Edit form popup */
+        .edit-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .edit-box {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid gray;
+        }
+        .edit-box h3 {
+            color: var(--text);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .edit-form input, .edit-form textarea {
+            padding: 15px;
+            background: var(--quiz-option-bg);
+            border: 2px solid #555;
+            color: var(--text);
+            border-radius: 20px;
+            font-size: 16px;
+        }
+        .edit-form input:focus, .edit-form textarea:focus {
+            border-color: #00b894;
+            outline: none;
+        }
+        .edit-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .edit-buttons button {
+            flex: 1;
+            padding: 15px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        .save-btn {
+            background: #00b894;
+            color: white;
+        }
+        .cancel-edit-btn {
+            background: #666;
+            color: white;
         }
         
         .loading {
@@ -952,7 +1039,7 @@
               .then((querySnapshot) => {
                 kanjiData = [];
                 querySnapshot.forEach((doc) => {
-                    kanjiData.push(doc.data());
+                    kanjiData.push({...doc.data(), id: doc.id});
                 });
                 search();  // This will display in newest first order
                 updateTotalCount();
@@ -1180,16 +1267,79 @@
                 const timestamp = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'No date';
                 html += `
                     <div class="entry-item">
-                        <div>
-                            <strong>${data.k}</strong> - ${data.h}<br>
-                            <small>${data.e}</small><br>
-                            <small style="font-size: 12px; opacity: 0.5;">Added: ${timestamp}</small>
+                        <div class="entry-content">
+                            <strong>${data.k}</strong>
+                            <div>${data.h}</div>
+                            <div>${data.e}</div>
+                            <small style="opacity: 0.5;">Added: ${timestamp}</small>
                         </div>
-                        <button onclick="deleteEntry('${doc.id}')">Delete</button>
+                        <div class="entry-actions">
+                            <button class="edit-btn" onclick="showEditForm('${doc.id}', '${data.k}', '${data.h}', '${data.e}')">Edit</button>
+                            <button class="delete-btn" onclick="deleteEntry('${doc.id}')">Delete</button>
+                        </div>
                     </div>
                 `;
             });
             entryList.innerHTML = html || 'No entries yet';
+        }
+
+        // Show edit form popup
+        function showEditForm(docId, currentKanji, currentHiragana, currentEnglish) {
+            // Escape special characters for safe string insertion
+            const escapeStr = (str) => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'edit-overlay';
+            overlay.id = 'editOverlay';
+            overlay.innerHTML = `
+                <div class="edit-box">
+                    <h3>Edit Entry</h3>
+                    <div class="edit-form">
+                        <input type="text" id="editKanji" value="${escapeStr(currentKanji)}" placeholder="Kanji">
+                        <input type="text" id="editHiragana" value="${escapeStr(currentHiragana)}" placeholder="Hiragana">
+                        <textarea id="editEnglish" placeholder="English meaning">${escapeStr(currentEnglish)}</textarea>
+                        <div class="edit-buttons">
+                            <button class="save-btn" onclick="saveEdit('${docId}')">Save</button>
+                            <button class="cancel-edit-btn" onclick="closeEditForm()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function closeEditForm() {
+            const overlay = document.getElementById('editOverlay');
+            if (overlay) overlay.remove();
+        }
+
+        async function saveEdit(docId) {
+            const kanji = document.getElementById('editKanji').value.trim();
+            const hiragana = document.getElementById('editHiragana').value.trim();
+            const english = document.getElementById('editEnglish').value.trim();
+
+            if (!kanji || !hiragana || !english) {
+                alert('Please fill all fields!');
+                return;
+            }
+
+            try {
+                await db.collection('kanji').doc(docId).update({
+                    k: kanji,
+                    h: hiragana,
+                    e: english,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // Update timestamp
+                });
+
+                closeEditForm();
+                loadKanjiData(); // Reload all data
+                displayEntries(); // Refresh the list
+                updateTotalCount();
+                alert('Entry updated successfully!');
+            } catch (error) {
+                console.error('Error updating entry:', error);
+                alert('Error updating entry!');
+            }
         }
 
         async function addKanjiEntry() {
@@ -1540,7 +1690,7 @@
                 </div>
             `;
             
-            progress.innerText = `Q${currentQuizIndex+1}/${quizQuestions.length}`;
+            progress.innerText = `QUIZ`;
             const answeredCount = userAnswers.filter(a => a !== null).length;
             scoreDisplay.innerText = `${answeredCount} / ${quizQuestions.length}`;
         }
