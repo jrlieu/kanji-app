@@ -9,14 +9,23 @@
     
     <style>
 	/* Make all text uncopiable */
-* {
-    -webkit-user-select: none;  /* Chrome, Safari, Opera */
-    -moz-user-select: none;     /* Firefox */
-    -ms-user-select: none;      /* Internet Explorer/Edge */
-    user-select: none;          /* Non-prefixed version, currently supported by Chrome, Opera and Firefox */
-    -webkit-touch-callout: none; /* Disable callout, image save panel in Safari */
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
-}
+    * {
+        -webkit-user-select: none;  /* Chrome, Safari, Opera */
+        -moz-user-select: none;     /* Firefox */
+        -ms-user-select: none;      /* Internet Explorer/Edge */
+        user-select: none;          /* Non-prefixed version, currently supported by Chrome, Opera and Firefox */
+        -webkit-touch-callout: none; /* Disable callout, image save panel in Safari */
+        -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+    }
+
+    /* Exception for input fields - they need to be copyable for typing */
+    input, textarea {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+        
         * { box-sizing: border-box; }
         :root {
             --bg: #000; --card-bg: #000; --text: #ffffff;
@@ -25,6 +34,8 @@
             --correct-bg: rgba(0, 184, 148, 0.15);
             --wrong-bg: rgba(214, 48, 49, 0.15);
             --nav-bg: #00b894;
+            --warning-bg: rgba(255, 71, 87, 0.15);
+            --warning-border: #ff4757;
         }
         [data-theme="light"] {
             --bg: #fff; --card-bg: #ffffff; --text: #000;
@@ -33,6 +44,8 @@
             --correct-bg: rgba(0, 184, 148, 0.1);
             --wrong-bg: rgba(214, 48, 49, 0.1);
             --nav-bg: lightgray;
+            --warning-bg: rgba(255, 71, 87, 0.1);
+            --warning-border: #ff4757;
         }
 
         body, html {
@@ -136,6 +149,8 @@
             overflow-y: auto; 
             padding: 10px 10px 20px; 
         }
+        
+        /* Fixed search result item layout */
         .kanji-list-item { 
             padding: 20px; 
             background: var(--card-bg); 
@@ -143,38 +158,152 @@
             margin-bottom: 8px; 
             border: 1px solid var(--border);
         }
+        
+        .kanji-list-item .kanji {
+            font-size: 32px; 
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        
+        .kanji-list-item .details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .kanji-list-item .hiragana {
+            color: var(--accent);
+            font-size: 18px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .kanji-list-item .english {
+            color: var(--sub-text);
+            font-size: 16px;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: normal;
+        }
+        
+        /* For larger screens, show side-by-side if space permits */
+        @media (min-width: 500px) {
+            .kanji-list-item .details {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .kanji-list-item .hiragana {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+            
+            .kanji-list-item .english {
+                flex: 1;
+                text-align: right;
+                max-width: 60%;
+            }
+        }
+        
+        /* For very long English text on larger screens */
+        @media (min-width: 500px) and (max-width: 600px) {
+            .kanji-list-item .english {
+                max-width: 50%;
+                font-size: 14px;
+            }
+        }
 
         #flashcardView {
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             background-color: var(--bg);
-            padding-top: 8vh;
             overflow: hidden;
+            padding: 20px;
         }
         #fcContainer {
             width: 100%;
+            max-width: 500px;
             text-align: center;
             will-change: transform;
             transition: transform 0.2s ease-out;
+            background: var(--card-bg);
+            border-radius: 40px;
+            padding: 30px 20px;
+            border: 0px solid gray;
+  
         }
         .fc-kanji { 
             font-weight: bold; 
-            margin-bottom: 20px; 
-            white-space: nowrap; 
+            margin-bottom: 30px; 
             display: block; 
             width: 100%;
-            font-size: clamp(60px, 20vw, 140px);
+            font-size: clamp(80px, 25vw, 180px);
+            color: var(--accent);
+            text-shadow: 0 4px 12px rgba(0,184,148,0.3);
         }
-        .fc-bottom { 
-            width: 100%; 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 0 30px; 
-            box-sizing: border-box; 
-            margin-top: 20px; 
+        
+        .fc-details {
+            margin: 20px 0;
+            transition: opacity 0.3s ease;
         }
-        .hiragana { color: var(--accent); font-size: 22px; font-weight: 500; }
-        .english { color: var(--sub-text); font-size: 20px; font-style: italic; }
+        
+        .fc-hiragana { 
+            color: var(--accent); 
+            font-size: 32px; 
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: block;
+            word-break: break-word;
+        }
+        
+        .fc-english { 
+            color: var(--text); 
+            font-size: 28px; 
+            font-weight: 400;
+            display: block;
+            opacity: 0.9;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .show-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px auto 10px;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 15px rgba(0,184,148,0.3);
+            width: fit-content;
+        }
+        
+        .show-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .show-btn.hidden-btn {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .swipe-hint {
+            color: var(--sub-text);
+            font-size: 14px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
 
         #quizView {
             background: var(--bg);
@@ -274,12 +403,14 @@
             letter-spacing: 4px; 
             text-shadow: 0 4px 8px rgba(0,0,0,0.3);
             margin-bottom: 10px;
+            word-break: break-word;
         }
         .quiz-question-hiragana {
             font-size: clamp(24px, 6vw, 40px);
             color: var(--accent);
             font-weight: 500;
             letter-spacing: 2px;
+            word-break: break-word;
         }
         .quiz-options {
             display: flex; 
@@ -300,6 +431,9 @@
             cursor: pointer; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             color: var(--text);
+            text-align: center;
+            word-break: break-word;
+            line-height: 1.4;
         }
         .quiz-option.selected {
             border-color: var(--accent); 
@@ -371,6 +505,7 @@
             padding: 16px 8px;
             text-align: center;
             border-bottom: 1px solid var(--border);
+            word-break: break-word;
         }
         .result-table .correct-row { background: var(--correct-bg); }
         .result-table .wrong-row { background: var(--wrong-bg); }
@@ -411,7 +546,77 @@
             color: var(--text);
         }
         
-        /* Duplicate warning style */
+        /* Stats card */
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid gray;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stats-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #00b894;
+        }
+        
+        .stats-label {
+            color: var(--sub-text);
+            font-size: 20px;
+			font-weight: bold;
+        }
+        
+        /* Warning message and similar kanji list */
+        .similar-warning {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .similar-warning p {
+            margin: 0 0 10px 0;
+            color: var(--text);
+            font-weight: 500;
+        }
+        
+        .similar-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .similar-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,71,87,0.3);
+        }
+        
+        .similar-item:last-child {
+            border-bottom: none;
+        }
+        
+        .similar-kanji {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text);
+        }
+        
+        .similar-details {
+            color: var(--sub-text);
+            font-size: 14px;
+        }
+        
+        /* Duplicate warning style - updated */
         .duplicate-warning {
             color: #ff4757;
             font-size: 14px;
@@ -548,6 +753,7 @@
         }
         .entry-item div {
             color: var(--text);
+            word-break: break-word;
         }
         .entry-item strong {
             color: var(--text);
@@ -563,6 +769,7 @@
             border-radius: 20px;
             cursor: pointer;
             transition: opacity 0.2s;
+            flex-shrink: 0;
         }
         .entry-item button:hover {
             opacity: 0.9;
@@ -599,16 +806,20 @@
     <div id="flashcardView" class="view">
         <div id="fcContainer">
             <div class="fc-kanji" id="fcKanji">?</div>
-            <div class="fc-bottom">
-                <span class="hiragana" id="fcHiragana"></span>
-                <span class="english" id="fcEnglish"></span>
+            
+            <div class="fc-details" id="fcDetails">
+                <span class="fc-hiragana" id="fcHiragana"></span>
+                <span class="fc-english" id="fcEnglish"></span>
             </div>
+            
+            <button class="show-btn" id="showAnswerBtn" onclick="toggleAnswer()">Show</button>
+            <div class="swipe-hint">← Swipe left/right for next/previous →</div>
         </div>
     </div>
 
     <div id="quizView" class="view">
         <div id="quizSetupScreen" class="quiz-setup">
-            <h2>📝 Quiz Setup</h2>
+            <h2>📝 Kanji Quiz</h2>
             <p style="color: var(--sub-text); margin-bottom: 20px;">How many questions?</p>
             <div class="quiz-option-buttons">
                 <button class="quiz-length-btn" onclick="selectQuizLength(10)">10</button>
@@ -629,10 +840,23 @@
 
     <div id="adminView" class="view">
         <div style="padding: 20px;">
-            <h2>Admin Panel</h2>
+            <h2>Admin Space</h2>
+            
+            <!-- Stats card -->
+            <div class="stats-card">
+                <span class="stats-label">Entries</span>
+                <span class="stats-number" id="totalKanjiCount">0</span>
+            </div>
+            
             <div class="admin-form">
-                <input type="text" id="newKanji" placeholder="Kanji (e.g., 催促)" oninput="checkDuplicateKanji()">
-                <div id="duplicateWarning" class="duplicate-warning">⚠️ This kanji already exists!</div>
+                <input type="text" id="newKanji" placeholder="Kanji (e.g., 催促)" oninput="checkSimilarKanji()">
+                
+                <!-- Similar kanji warning -->
+                <div id="similarWarning" class="similar-warning">
+                    <p>⚠️ Similar Kanji already exist:</p>
+                    <ul id="similarList" class="similar-list"></ul>
+                </div>
+                
                 <input type="text" id="newHiragana" placeholder="Hiragana (e.g., さいそく)">
                 <textarea id="newEnglish" placeholder="English meaning (e.g., To urge / To press)"></textarea>
                 <button class="admin-submit" id="addEntryBtn" onclick="addKanjiEntry()">Add Entry</button>
@@ -675,6 +899,9 @@
         let isAdminAuthenticated = false;
         let selectedQuizLength = null;
         
+        // Flashcard state
+        let showingAnswer = false;
+        
         // Admin secret tap detection
         let tapCount = 0;
         let tapTimer = null;
@@ -685,14 +912,24 @@
                 isAdminAuthenticated = true;
                 if (currentView === 'admin') {
                     displayEntries();
+                    updateTotalCount();
                 }
             } else {
                 isAdminAuthenticated = false;
             }
         });
 
-        // Secret admin trigger - tap anywhere within 1 second
-        document.addEventListener('click', function() {
+        // Secret admin trigger - only works in main page and not on nav
+        document.addEventListener('click', function(e) {
+            // Check if we're in the main search view
+            if (currentView !== 'search') return;
+            
+            // Check if click target is in the top nav
+            if (e.target.closest('.top-nav')) return;
+            
+            // Check if click target is in the results area (main page body)
+            if (!e.target.closest('#results')) return;
+            
             tapCount++;
             
             if (tapTimer) {
@@ -718,6 +955,7 @@
                     kanjiData.push(doc.data());
                 });
                 search();  // This will display in newest first order
+                updateTotalCount();
                 console.log('Data loaded (newest first):', kanjiData);
             }).catch((error) => {
                 console.log('Error loading data:', error);
@@ -725,9 +963,12 @@
                 kanjiData = [
                     { k: "催促", h: "さいそく", e: "To urge / To press someone for an answer" },
                     { k: "涙", h: "なみだ", e: "Tears" },
-                    { k: "予約", h: "よやく", e: "Reservation / Appointment" }
+                    { k: "予約", h: "よやく", e: "Reservation / Appointment" },
+                    { k: "理解", h: "りかい", e: "Understanding / Comprehension / To understand" },
+                    { k: "約束", h: "やくそく", e: "Promise / Appointment / Agreement / To promise" }
                 ];
                 search();
+                updateTotalCount();
             });
         }
 
@@ -773,6 +1014,7 @@
                 searchBar.placeholder = '管理';
                 if (isAdminAuthenticated) {
                     displayEntries();
+                    updateTotalCount();
                 }
             }
         }
@@ -823,27 +1065,38 @@
             document.getElementById('startQuizBtn').disabled = false;
         }
 
-        // ----- DUPLICATE KANJI CHECK -----
-        function checkDuplicateKanji() {
+        // ----- SIMILAR KANJI CHECK (replaces duplicate check) -----
+        function checkSimilarKanji() {
             const kanjiInput = document.getElementById('newKanji').value.trim();
-            const warningDiv = document.getElementById('duplicateWarning');
-            const addBtn = document.getElementById('addEntryBtn');
+            const warningDiv = document.getElementById('similarWarning');
+            const similarList = document.getElementById('similarList');
             
-            if (!kanjiInput) {
+            if (!kanjiInput || kanjiInput.length === 0) {
                 warningDiv.style.display = 'none';
-                addBtn.disabled = false;
                 return;
             }
             
-            // Check if kanji already exists in kanjiData
-            const exists = kanjiData.some(item => item.k === kanjiInput);
+            // Find similar kanji (partial matches)
+            const similar = kanjiData.filter(item => 
+                item.k.includes(kanjiInput) || kanjiInput.includes(item.k)
+            );
             
-            if (exists) {
+            if (similar.length > 0) {
+                // Build the list of similar kanji
+                let listHtml = '';
+                similar.forEach(item => {
+                    listHtml += `
+                        <li class="similar-item">
+                            <span class="similar-kanji">${item.k}</span>
+                            <span class="similar-details">${item.h} - ${item.e.substring(0, 30)}${item.e.length > 30 ? '...' : ''}</span>
+                        </li>
+                    `;
+                });
+                
+                similarList.innerHTML = listHtml;
                 warningDiv.style.display = 'block';
-                addBtn.disabled = true;
             } else {
                 warningDiv.style.display = 'none';
-                addBtn.disabled = false;
             }
         }
 
@@ -894,6 +1147,7 @@
                 closePasscode();
                 setActiveView('admin');
                 displayEntries();
+                updateTotalCount();
             } catch (error) {
                 alert('Wrong password!');
                 console.error(error);
@@ -907,6 +1161,13 @@
             }).catch((error) => {
                 console.error('Error signing out:', error);
             });
+        }
+
+        function updateTotalCount() {
+            const countEl = document.getElementById('totalKanjiCount');
+            if (countEl) {
+                countEl.textContent = kanjiData.length;
+            }
         }
 
         async function displayEntries() {
@@ -941,11 +1202,12 @@
                 return;
             }
 
-            // Double-check for duplicate before adding (in case data changed)
+            // Don't block duplicate entries, just warn
             const exists = kanjiData.some(item => item.k === kanji);
             if (exists) {
-                alert('This kanji already exists! Duplicate entries are not allowed.');
-                return;
+                if (!confirm('This kanji already exists! Are you sure you want to add a duplicate?')) {
+                    return;
+                }
             }
 
             try {
@@ -960,12 +1222,12 @@
                 document.getElementById('newHiragana').value = '';
                 document.getElementById('newEnglish').value = '';
                 
-                // Hide warning and enable button
-                document.getElementById('duplicateWarning').style.display = 'none';
-                document.getElementById('addEntryBtn').disabled = false;
+                // Hide warning
+                document.getElementById('similarWarning').style.display = 'none';
 
                 loadKanjiData();
                 displayEntries();
+                updateTotalCount();
                 alert('Entry added successfully!');
             } catch (error) {
                 console.error('Error adding entry:', error);
@@ -979,6 +1241,7 @@
                     await db.collection('kanji').doc(docId).delete();
                     loadKanjiData();
                     displayEntries();
+                    updateTotalCount();
                 } catch (error) {
                     console.error('Error deleting entry:', error);
                     alert('Error deleting entry!');
@@ -1009,11 +1272,13 @@
             filtered.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'kanji-list-item';
-                card.innerHTML = `<div style="font-size:32px; font-weight:bold;">${item.k}</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:5px;">
-                        <span style="color:var(--accent)">${item.h}</span>
-                        <span style="color:var(--sub-text)">${item.e}</span>
-                    </div>`;
+                card.innerHTML = `
+                    <div class="kanji">${item.k}</div>
+                    <div class="details">
+                        <span class="hiragana">${item.h}</span>
+                        <span class="english">${item.e}</span>
+                    </div>
+                `;
                 resultsDiv.appendChild(card);
             });
         }
@@ -1021,19 +1286,29 @@
         // ----- FLASHCARD -----
         function resetDeck() {
             deck = [...kanjiData].sort(() => Math.random() - 0.5);
-            history = []; currentCard = null;
+            history = []; 
+            currentCard = null;
+            showingAnswer = false;
         }
 
         function displayCard(card) {
             currentCard = card;
+            showingAnswer = false;
+            
             const kanjiEl = document.getElementById('fcKanji');
             const len = card.k.length;
             if (len > 5) kanjiEl.style.fontSize = 'clamp(40px, 12vw, 70px)';
             else if (len > 3) kanjiEl.style.fontSize = 'clamp(50px, 15vw, 100px)';
             else kanjiEl.style.fontSize = 'clamp(60px, 20vw, 140px)';
+            
             kanjiEl.innerText = card.k;
             document.getElementById('fcHiragana').innerText = card.h;
             document.getElementById('fcEnglish').innerText = card.e;
+            
+            // Hide the details
+            document.getElementById('fcDetails').classList.add('hidden');
+            document.getElementById('showAnswerBtn').classList.remove('hidden-btn');
+            document.getElementById('showAnswerBtn').innerText = 'Show';
         }
 
         function showNext() {
@@ -1046,6 +1321,24 @@
             if (history.length > 0) {
                 deck.push(currentCard);
                 displayCard(history.pop());
+            }
+        }
+        
+        function toggleAnswer() {
+            if (!currentCard) return;
+            
+            showingAnswer = !showingAnswer;
+            const detailsEl = document.getElementById('fcDetails');
+            const btnEl = document.getElementById('showAnswerBtn');
+            
+            if (showingAnswer) {
+                detailsEl.classList.remove('hidden');
+                btnEl.classList.add('hidden-btn');
+                btnEl.innerText = 'Showing';
+            } else {
+                detailsEl.classList.add('hidden');
+                btnEl.classList.remove('hidden-btn');
+                btnEl.innerText = 'Show';
             }
         }
 
