@@ -3,11 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KanjiDict — with Authentication</title>
+    <title>KanjiDict</title>
     <link rel="manifest" href="manifest.json?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
+	/* Make all text uncopiable */
+* {
+    -webkit-user-select: none;  /* Chrome, Safari, Opera */
+    -moz-user-select: none;     /* Firefox */
+    -ms-user-select: none;      /* Internet Explorer/Edge */
+    user-select: none;          /* Non-prefixed version, currently supported by Chrome, Opera and Firefox */
+    -webkit-touch-callout: none; /* Disable callout, image save panel in Safari */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+}
         * { box-sizing: border-box; }
         :root {
             --bg: #000; --card-bg: #000; --text: #ffffff;
@@ -110,25 +119,6 @@
             flex-shrink: 0;
         }
         .nav-btn:active { transform: scale(0.92); }
-
-        .admin-btn {
-            background: var(--accent);;
-            color: black;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: 0.1s;
-            border: 1px solid rgba(255,255,255,0.2);
-            flex-shrink: 0;
-        }
-        .admin-btn:active { transform: scale(0.92); }
 
         .view {
             display: none;
@@ -328,34 +318,35 @@
             pointer-events: none;
             opacity: 0.7;
         }
-        .quiz-footer {
-            display: flex; 
-            justify-content: space-between; 
-            margin-top: 30px;
-            gap: 12px; 
-            padding: 0 8px;
-        }
-        .quiz-btn {
-            background: #f0f0f0; 
-            color: black; 
-            border: none;
-            padding: 16px 24px; 
-            border-radius: 50px; 
-            font-size: 18px; 
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-            cursor: pointer; 
-            flex: 1;
-            transition: opacity 0.2s; 
-            text-align: center;
-        }
-        .quiz-btn:disabled { 
-            opacity: 0.25; 
-            pointer-events: none; 
-            cursor: not-allowed;
-        }
 
         #quizResultArea { padding: 8px 4px 20px; }
+        
+        /* Score Card Styles */
+        .score-card {
+            text-align: center; 
+            margin-bottom: 20px; 
+            padding: 30px 20px; 
+            background: var(--card-bg); 
+            border-radius: 30px; 
+            border: 1px solid gray;
+        }
+        .score-number {
+            font-size: 64px; 
+            font-weight: bold; 
+            color: #00b894;
+            line-height: 1.2;
+        }
+        .score-percentage {
+            font-size: 32px; 
+            color: var(--text); 
+            margin-top: 10px;
+        }
+        .score-message {
+            font-size: 20px; 
+            color: var(--sub-text); 
+            margin-top: 10px;
+        }
+        
         .result-table {
             width: 100%;
             border-collapse: collapse;
@@ -387,11 +378,27 @@
         @media (max-width: 400px) {
             .result-table th, .result-table td { padding: 12px 4px; font-size: 14px; }
         }
+        
+        /* Fixed restart quiz button - now visible in both themes */
         .restart-quiz {
-            background: var(--accent); color: black; border: none;
-            padding: 18px; border-radius: 60px; font-size: 20px; font-weight: bold;
-            margin: 20px 0 30px; cursor: pointer; width: 100%;
+            background: #00b894; 
+            color: white; 
+            border: none;
+            padding: 18px; 
+            border-radius: 60px; 
+            font-size: 20px; 
+            font-weight: bold;
+            margin: 20px 0 30px; 
+            cursor: pointer; 
+            width: 100%;
             box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .restart-quiz:hover {
+            opacity: 0.9;
+        }
+        .restart-quiz:active {
+            transform: scale(0.98);
         }
 
         #adminView {
@@ -581,7 +588,7 @@
             <button class="nav-btn" id="quizNavBtn" onclick="showQuizSetup()" title="Quiz"><i class="fas fa-pencil-alt"></i></button>
             <button class="nav-btn" id="flashcardNavBtn" onclick="toggleFlashcard()" title="Flashcards"><i class="fas fa-layer-group"></i></button>
             <button class="nav-btn" id="themeNavBtn" onclick="toggleTheme()" title="Light/Dark"><i class="fas fa-sun"></i></button>
-            <button class="admin-btn" id="adminNavBtn" onclick="showAdminPasscode()" title="Admin"><i class="fas fa-lock"></i></button>
+            <!-- Admin button removed -->
         </div>
     </div>
 
@@ -667,6 +674,10 @@
         let quizFinished = false;
         let isAdminAuthenticated = false;
         let selectedQuizLength = null;
+        
+        // Admin secret tap detection
+        let tapCount = 0;
+        let tapTimer = null;
 
         // Check auth state
         auth.onAuthStateChanged((user) => {
@@ -678,6 +689,22 @@
             } else {
                 isAdminAuthenticated = false;
             }
+        });
+
+        // Secret admin trigger - tap anywhere within 1 second
+        document.addEventListener('click', function() {
+            tapCount++;
+            
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+            }
+            
+            tapTimer = setTimeout(() => {
+                if (tapCount >= 3) { // Triple tap to trigger admin
+                    showAdminPasscode();
+                }
+                tapCount = 0;
+            }, 1000); // 1 second window
         });
 
         // Load data from Firestore - ORDER BY TIMESTAMP DESC (newest first)
@@ -737,6 +764,7 @@
                 currentView = 'quiz';
                 searchBar.disabled = true;
                 searchBar.placeholder = '試験';
+                // Make sure we show the setup screen when navigating to quiz
                 showQuizSetup();
             } else if (viewName === 'admin') {
                 document.getElementById('adminView').classList.add('active-view');
@@ -759,14 +787,28 @@
 
         // ----- QUIZ SETUP -----
         function showQuizSetup() {
-            setActiveView('quiz');
+            // Reset quiz state
+            quizQuestions = [];
+            currentQuizIndex = 0;
+            userAnswers = [];
+            quizFinished = false;
+            selectedQuizLength = null;
+            
+            // Show setup screen, hide quiz screen
             document.getElementById('quizSetupScreen').style.display = 'block';
             document.getElementById('quizScreen').style.display = 'none';
-            selectedQuizLength = null;
+            document.getElementById('quizResultArea').style.display = 'none';
+            
+            // Reset selection buttons
             document.querySelectorAll('.quiz-length-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
             document.getElementById('startQuizBtn').disabled = true;
+            
+            // If we're not already in quiz view, switch to it
+            if (currentView !== 'quiz') {
+                setActiveView('quiz');
+            }
         }
 
         function selectQuizLength(length) {
@@ -807,6 +849,9 @@
 
         // ----- ADMIN FUNCTIONS WITH FIXED PASSCODE POPUP -----
         function showAdminPasscode() {
+            // Don't show if already in admin view or authenticated
+            if (currentView === 'admin' && isAdminAuthenticated) return;
+            
             const overlay = document.createElement('div');
             overlay.className = 'passcode-overlay';
             overlay.id = 'passcodeOverlay';
@@ -1064,6 +1109,8 @@
             // Hide setup, show quiz screen
             document.getElementById('quizSetupScreen').style.display = 'none';
             document.getElementById('quizScreen').style.display = 'block';
+            document.getElementById('quizResultArea').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
 
             const shuffled = [...kanjiData].sort(() => Math.random() - 0.5);
             const selected = shuffled.slice(0, Math.min(selectedQuizLength, shuffled.length));
@@ -1125,11 +1172,33 @@
             if (quizFinished) {
                 container.style.display = 'none';
                 resultArea.style.display = 'block';
+                
+                // Calculate score
+                const totalQuestions = quizQuestions.length;
+                const correctAnswers = userAnswers.filter((ansIdx, idx) => 
+                    ansIdx !== null && quizQuestions[idx].options[ansIdx].isCorrect
+                ).length;
+                const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
+                
+                // Determine message based on score
+                let message = '';
+                if (scorePercentage >= 90) message = '🎉 Excellent! Perfect score!';
+                else if (scorePercentage >= 80) message = '🌟 Great job! Almost there!';
+                else if (scorePercentage >= 70) message = '👍 Good effort! Keep practicing!';
+                else if (scorePercentage >= 60) message = '💪 Getting better! Try again!';
+                else message = '📚 More practice needed! You can do it!';
+                
                 let html = `
+                    <div class="score-card">
+                        <div class="score-number">${correctAnswers}/${totalQuestions}</div>
+                        <div class="score-percentage">${scorePercentage}%</div>
+                        <div class="score-message">${message}</div>
+                    </div>
                     <table class="result-table">
                         <thead><tr><th>Kanji</th><th>Your answer</th><th>Correct</th></tr></thead>
                         <tbody>
                 `;
+                
                 quizQuestions.forEach((q, idx) => {
                     const ansIdx = userAnswers[idx];
                     const selectedEnglish = ansIdx !== null ? q.options[ansIdx].english : '—';
@@ -1141,6 +1210,7 @@
                         <td>${q.correctEnglish}</td>
                     </tr>`;
                 });
+                
                 html += '</tbody></table><button class="restart-quiz" onclick="showQuizSetup()">Take another quiz</button>';
                 resultArea.innerHTML = html;
                 return;
@@ -1174,10 +1244,6 @@
                         <div class="quiz-question-hiragana">${q.hiragana}</div>
                     </div>
                     <div class="quiz-options">${optionsHtml}</div>
-                    <div class="quiz-footer">
-                        <button class="quiz-btn" ${currentQuizIndex === 0 ? 'disabled' : ''} onclick="prevQuiz()">Prev</button>
-                        <button class="quiz-btn" id="nextQuizBtn" onclick="nextQuiz()" ${selectedIndex === null ? 'disabled' : ''}>${currentQuizIndex === quizQuestions.length-1 ? 'Finish' : 'Next'}</button>
-                    </div>
                 </div>
             `;
             
@@ -1189,25 +1255,27 @@
         function selectOption(optIdx) {
             if (quizFinished) return;
             if (userAnswers[currentQuizIndex] !== null) return;
+            
+            // Save the answer
             userAnswers[currentQuizIndex] = optIdx;
-            renderQuiz();
-        }
-
-        function prevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
-        
-        function nextQuiz() { 
-            // Check if current question is answered
-            if (userAnswers[currentQuizIndex] === null) {
-                return; // Don't proceed if not answered
+            
+            // Automatically move to next question or finish
+            if (currentQuizIndex < quizQuestions.length - 1) {
+                // Small delay to show the result before moving
+                setTimeout(() => {
+                    currentQuizIndex++;
+                    renderQuiz();
+                }, 500);
+            } else {
+                // This was the last question, finish the quiz
+                setTimeout(() => {
+                    quizFinished = true;
+                    renderQuiz();
+                }, 500);
             }
             
-            if (currentQuizIndex < quizQuestions.length-1) { 
-                currentQuizIndex++; 
-                renderQuiz(); 
-            } else { 
-                quizFinished = true; 
-                renderQuiz(); 
-            } 
+            // Update the display to show correct/wrong immediately
+            renderQuiz();
         }
 
         // ----- THEME toggle -----
